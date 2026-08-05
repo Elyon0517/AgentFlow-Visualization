@@ -1,5 +1,5 @@
 {
-  "name": "agentflow-visualization-web",
+  "name": "agentflow-visualization",
   "version": "0.1.0",
   "private": true,
   "type": "module",

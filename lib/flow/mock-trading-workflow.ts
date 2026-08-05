@@ -366,4 +366,3 @@ function buildMockTradingWorkflow(): FlowEvent[] {
 
 export const MOCK_TRADING_WORKFLOW: FlowEvent[] = buildMockTradingWorkflow()
 
-
