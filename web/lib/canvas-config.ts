@@ -33,23 +33,9 @@ export const BEAM = {
   segments: 16,
 } as const
 
-export const Z = {
-  detailCard: 100,
-} as const
-
-export const TIMING = {
-  glassAnimMs: 200,
-} as const
-
-/** Screen-edge margin used when clamping a popup into the viewport. */
-export const CARD_MARGIN = 8
-
 /** Cached once at module load — avoids parsing location.search every frame */
 export const PERF_OVERLAY_ENABLED = typeof window !== 'undefined'
-  && (() => {
-    const p = new URLSearchParams(window.location.search)
-    return p.has('perf') || p.has('stress')
-  })()
+  && new URLSearchParams(window.location.search).has('perf')
 
 export const PERF_OVERLAY = {
   x: 8,
@@ -69,3 +55,7 @@ export const PERF_OVERLAY = {
   fpsWarningColor: '#ff4444',
   textColor: '#cccccc',
 } as const
+
+/** Combined height of the view bar and the source bar. Full-screen panels
+ *  start below it so they never sit underneath the chrome. */
+export const CHROME_HEIGHT = 62

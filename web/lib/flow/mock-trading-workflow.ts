@@ -366,9 +366,4 @@ function buildMockTradingWorkflow(): FlowEvent[] {
 
 export const MOCK_TRADING_WORKFLOW: FlowEvent[] = buildMockTradingWorkflow()
 
-export const MOCK_TRADING_RUN_ID = RUN_ID
 
-/** Run-relative seconds of the final event, plus a tail so the last
- *  animations finish before playback stops. */
-export const MOCK_TRADING_DURATION =
-  (Date.parse(MOCK_TRADING_WORKFLOW[MOCK_TRADING_WORKFLOW.length - 1].timestamp) - RUN_START_MS) / 1000 + 4

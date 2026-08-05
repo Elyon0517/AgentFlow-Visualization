@@ -13,6 +13,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { COLORS } from '@/lib/colors'
+import { CHROME_HEIGHT } from '@/lib/canvas-config'
 import type { FlowNode } from '@/lib/flow/graph'
 import { getNodeSpec, getStatusColor } from '@/lib/flow/node-registry'
 
@@ -101,7 +102,7 @@ export function FlowTimelinePanel({
   }
 
   return (
-    <div className="absolute inset-x-0 bottom-0 top-9 flex flex-col" style={{ background: COLORS.void }}>
+    <div className="absolute inset-x-0 bottom-0 flex flex-col" style={{ top: CHROME_HEIGHT, background: COLORS.void }}>
       <div
         className="px-3 py-1.5 text-[9px] font-mono flex items-center gap-3"
         style={{ borderBottom: `1px solid ${COLORS.holoBorder06}`, color: COLORS.textMuted }}

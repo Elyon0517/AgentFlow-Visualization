@@ -8,16 +8,19 @@
  * selected in one is selected in all of them.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { COLORS } from '@/lib/colors'
-import type { FlowNodeType } from '@/lib/flow/events'
+import type { FlowEvent, FlowNodeType } from '@/lib/flow/events'
 import { allNodeSpecs, getStatusColor } from '@/lib/flow/node-registry'
 import { MOCK_TRADING_WORKFLOW } from '@/lib/flow/mock-trading-workflow'
 import { runningNodeIds } from '@/lib/flow/reducer'
+import { downloadRunAsJsonl, loadRunFromFile, loadRunFromUrl } from '@/lib/flow/stream'
 import { useFlowRun } from '@/hooks/use-flow-run'
+import { useFlowStream } from '@/hooks/use-flow-stream'
 import { FlowCanvas } from './flow-canvas'
 import { FlowLogsPanel } from './flow-logs-panel'
 import { FlowNodePopup } from './flow-node-popup'
+import { FlowSourceBar, type SourceKind } from './flow-source-bar'
 import { FlowTimelinePanel } from './flow-timeline-panel'
 
 const SPEEDS = [0.5, 1, 2, 4]
@@ -30,6 +33,13 @@ const VIEWS: Array<{ id: ViewMode; label: string }> = [
   { id: 'logs', label: 'Logs' },
 ]
 
+/** `?stream=<url>` connects on load; `?replay=<url>` loads a saved run. */
+function readUrlParams() {
+  if (typeof window === 'undefined') return { stream: null, replay: null }
+  const params = new URLSearchParams(window.location.search)
+  return { stream: params.get('stream'), replay: params.get('replay') }
+}
+
 export function FlowView() {
   const [view, setView] = useState<ViewMode>('run')
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
@@ -38,18 +48,103 @@ export function FlowView() {
   const [showGrid, setShowGrid] = useState(true)
   const [zoomTrigger, setZoomTrigger] = useState(0)
 
-  const scenario = useMemo(() => MOCK_TRADING_WORKFLOW, [])
+  // ─── Event source ──────────────────────────────────────────────────────────
+
+  const urlParams = useMemo(readUrlParams, [])
+  const [source, setSource] = useState<SourceKind>(
+    urlParams.stream ? 'live' : urlParams.replay ? 'file' : 'mock',
+  )
+  const [liveUrl, setLiveUrl] = useState(urlParams.stream ?? '')
+  const [connectedUrl, setConnectedUrl] = useState<string | null>(urlParams.stream)
+  const [loadedRun, setLoadedRun] = useState<FlowEvent[] | null>(null)
+  const [fileName, setFileName] = useState<string | undefined>(undefined)
+  const [fileError, setFileError] = useState<string | undefined>(undefined)
+
+  const stream = useFlowStream(source === 'live' ? connectedUrl : null)
+
+  // A live run has no pre-recorded script; a demo or a loaded file does.
+  const scenario = useMemo(() => {
+    if (source === 'mock') return MOCK_TRADING_WORKFLOW
+    if (source === 'file') return loadedRun ?? undefined
+    return undefined
+  }, [source, loadedRun])
 
   const {
     frameRef, layoutRef, focusSetRef,
-    run, nodes, logs, currentTime, duration, isPlaying, speed,
+    run, nodes, logs, eventLog, currentTime, duration, isPlaying, speed,
     play, pause, setSpeed, seekTo, restart,
   } = useFlowRun({
     scenario,
+    liveEvents: source === 'live' ? stream.pending : undefined,
+    onLiveEventsConsumed: stream.consume,
     // Focus only dims the graph when the user asks for it; selecting a node to
     // read its details should not grey out everything else.
     focusNodeId: focusPath ? selectedNodeId : null,
   })
+
+  // ─── Source actions ────────────────────────────────────────────────────────
+
+  const openFile = useCallback(async (file: File) => {
+    setFileError(undefined)
+    try {
+      const { events, errors } = await loadRunFromFile(file)
+      if (events.length === 0) {
+        setFileError(`no valid events in ${file.name}`)
+        return
+      }
+      setLoadedRun(events)
+      setFileName(file.name)
+      setSource('file')
+      // Malformed lines are surfaced, not swallowed — a producer writing bad
+      // JSONL should hear about it rather than silently lose half a run.
+      if (errors.length > 0) setFileError(`${errors.length} line(s) skipped (first: line ${errors[0].line})`)
+    } catch (error) {
+      setFileError(error instanceof Error ? error.message : 'could not read file')
+    }
+  }, [])
+
+  // `?replay=<url>` — load a saved run straight from a link.
+  const replayUrl = urlParams.replay
+  useEffect(() => {
+    if (!replayUrl) return
+    let cancelled = false
+    loadRunFromUrl(replayUrl)
+      .then(({ events }) => {
+        if (cancelled || events.length === 0) return
+        setLoadedRun(events)
+        setFileName(replayUrl)
+        setSource('file')
+      })
+      .catch(error => !cancelled && setFileError(String(error)))
+    return () => { cancelled = true }
+  }, [replayUrl])
+
+  // Drag and drop anywhere on the page.
+  useEffect(() => {
+    const onDragOver = (e: DragEvent) => { e.preventDefault() }
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault()
+      const file = e.dataTransfer?.files?.[0]
+      if (file) void openFile(file)
+    }
+    window.addEventListener('dragover', onDragOver)
+    window.addEventListener('drop', onDrop)
+    return () => {
+      window.removeEventListener('dragover', onDragOver)
+      window.removeEventListener('drop', onDrop)
+    }
+  }, [openFile])
+
+  const changeSource = useCallback((next: SourceKind) => {
+    setSource(next)
+    setSelectedNodeId(null)
+    setFileError(undefined)
+    if (next !== 'live') setConnectedUrl(null)
+  }, [])
+
+  const exportRun = useCallback(() => {
+    downloadRunAsJsonl(eventLog, run?.runId)
+  }, [eventLog, run?.runId])
 
   const toggleType = useCallback((type: FlowNodeType) => {
     setHiddenTypes(prev => {
@@ -134,6 +229,47 @@ export function FlowView() {
           onSelectNode={setSelectedNodeId}
         />
       )}
+
+      {/* Empty state — a live source that has not produced anything yet must
+          say so, or a blank canvas reads as a broken page. */}
+      {nodes.size === 0 && view === 'run' && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center font-mono">
+            <div className="text-[12px]" style={{ color: COLORS.textDim }}>
+              {source === 'live'
+                ? stream.status === 'open' ? 'CONNECTED — WAITING FOR EVENTS' : 'NO LIVE STREAM'
+                : source === 'file' ? 'NO RUN LOADED' : 'NO EVENTS'}
+            </div>
+            <div className="mt-1.5 text-[10px]" style={{ color: COLORS.textMuted }}>
+              {source === 'live'
+                ? stream.status === 'open'
+                  ? 'Your producer is connected but has not emitted anything'
+                  : stream.detail ?? 'Enter a stream URL in the source bar and connect'
+                : source === 'file'
+                  ? 'Choose a .jsonl file, or drop one anywhere on the page'
+                  : 'Switch the source to Demo to play the bundled workflow'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <FlowSourceBar
+        source={source}
+        onSourceChange={changeSource}
+        liveUrl={liveUrl}
+        onLiveUrlChange={setLiveUrl}
+        onConnect={() => setConnectedUrl(liveUrl.trim() || null)}
+        onDisconnect={() => setConnectedUrl(null)}
+        streamStatus={stream.status}
+        streamDetail={stream.detail}
+        received={stream.received}
+        rejected={stream.rejected}
+        onLoadFile={file => void openFile(file)}
+        fileError={fileError}
+        fileName={fileName}
+        onExport={exportRun}
+        canExport={eventLog.length > 0}
+      />
 
       {/* ── Top bar ── */}
       <div

@@ -348,8 +348,3 @@ export function findFlowNodeAt(
   return null
 }
 
-/** Width of a node's rendered label, used to keep detail popups clear of it. */
-export function measureNodeLabel(ctx: CanvasRenderingContext2D, node: FlowNode): number {
-  ctx.font = DRAW.labelFont
-  return Math.min(measureTextCached(ctx, node.label), DRAW.labelMaxWidth)
-}
