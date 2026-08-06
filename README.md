@@ -6,6 +6,25 @@ An interactive, framework-agnostic visualizer for AI and agent workflows. Feed i
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 
+## Vision
+
+AI agents rarely perform a task in a single step. They plan, delegate work, call tools and models, wait for external systems, exchange data, retry failures, and make decisions across many concurrent branches. When all of this is hidden behind a terminal or a stream of raw logs, it is difficult to understand what the agent is doing, where it is blocked, or why the final result was produced.
+
+AgentFlow Visualization was created to make that workflow observable.
+
+The goal of this project is to turn an agent run into a live visual model, so we can observe the agent's state and execution logic at any moment. Instead of treating the agent as a black box, the interface shows:
+
+- which agents, tasks, tools, APIs, models, and memory systems are involved;
+- what is running, waiting, completed, retried, skipped, or failed;
+- how work and data move between nodes;
+- which steps run sequentially and which run concurrently;
+- where time is spent and where bottlenecks appear;
+- the producer-authored reasons, actions, observations, and outcomes behind each step.
+
+This makes AgentFlow useful not only as a visualization, but also as an observability and debugging layer for agent systems. It is intended to help developers inspect behavior during development, monitor live executions, replay past runs, explain failures, and communicate complex agent workflows more clearly.
+
+AgentFlow does **not** expose private model chain-of-thought. The “logic” shown by the interface is explicit, structured execution data supplied by the agent system—such as decisions, tool calls, state transitions, observations, and results—which is safe to inspect, persist, and share.
+
 ## Demo
 
 The animation below is captured from the bundled mock workflow running in the application at 2× speed. It exercises node creation, concurrent API work, data-transfer particles, a retry, and automatic graph layout.
