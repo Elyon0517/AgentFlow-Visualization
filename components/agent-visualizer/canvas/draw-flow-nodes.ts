@@ -26,13 +26,13 @@ import { drawCylinderLid, nodeShapeExtents, traceNodeShape } from './flow-shapes
 const DRAW = {
   glowPadding: 22,
   labelGap: 10,
-  labelFont: '11px monospace',
-  summaryFont: '9px monospace',
-  metaFont: '8px monospace',
-  labelMaxWidth: 150,
+  labelFont: '600 13px monospace',
+  summaryFont: '10px monospace',
+  metaFont: '9px monospace',
+  labelMaxWidth: 180,
   /** Below this camera scale, secondary text is skipped — it would be
    *  unreadable anyway and costs a measureText per node per frame. */
-  detailScaleThreshold: 0.55,
+  detailScaleThreshold: 0.42,
   badgeRadius: 7,
   progressRingOffset: 5,
   pulseExpand: 34,
@@ -178,7 +178,7 @@ function drawNodeText(
   ctx.font = DRAW.labelFont
   ctx.fillStyle = COLORS.textPrimary
   ctx.fillText(truncateText(ctx, node.label, DRAW.labelMaxWidth), x, cursorY)
-  cursorY += 13
+  cursorY += 16
 
   if (cameraScale < DRAW.detailScaleThreshold) return
 
@@ -186,7 +186,7 @@ function drawNodeText(
     ctx.font = DRAW.summaryFont
     ctx.fillStyle = COLORS.textDim
     ctx.fillText(truncateText(ctx, node.summary, DRAW.labelMaxWidth), x, cursorY)
-    cursorY += 11
+    cursorY += 13
   }
 
   // A waiting node must say what it is waiting on, and for how long — that is

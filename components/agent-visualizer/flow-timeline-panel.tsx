@@ -17,10 +17,10 @@ import { CHROME_HEIGHT } from '@/lib/canvas-config'
 import type { FlowNode } from '@/lib/flow/graph'
 import { getNodeSpec, getStatusColor } from '@/lib/flow/node-registry'
 
-const ROW_HEIGHT = 22
-const HEADER_HEIGHT = 22
-const LABEL_WIDTH = 170
-const FONT = '10px monospace'
+const ROW_HEIGHT = 34
+const HEADER_HEIGHT = 34
+const LABEL_WIDTH = 230
+const FONT = '11px monospace'
 
 interface FlowTimelinePanelProps {
   nodes: ReadonlyMap<string, FlowNode>
@@ -58,6 +58,16 @@ export function FlowTimelinePanel({
   }, [nodes, currentTime])
 
   const height = HEADER_HEIGHT + rows.length * ROW_HEIGHT
+  const metrics = useMemo(() => {
+    const attempts = rows.reduce((sum, row) => sum + Math.max(0, row.node.attempt - 1), 0)
+    const issues = rows.filter(row => row.node.status === 'warning' || row.node.status === 'failed').length
+    const points = rows.flatMap(row => [{ t: row.start, delta: 1 }, { t: row.end, delta: -1 }])
+      .sort((a, b) => a.t - b.t || a.delta - b.delta)
+    let active = 0
+    let peak = 0
+    for (const point of points) { active += point.delta; peak = Math.max(peak, active) }
+    return { attempts, issues, peak }
+  }, [rows])
 
   useEffect(() => {
     const container = containerRef.current
@@ -103,12 +113,15 @@ export function FlowTimelinePanel({
 
   return (
     <div className="absolute inset-x-0 bottom-0 flex flex-col" style={{ top: CHROME_HEIGHT, background: COLORS.void }}>
-      <div
-        className="px-3 py-1.5 text-[9px] font-mono flex items-center gap-3"
-        style={{ borderBottom: `1px solid ${COLORS.holoBorder06}`, color: COLORS.textMuted }}
-      >
-        <span>{rows.length} nodes</span>
-        <span>click a row to select · click the time axis to seek</span>
+      <div className="px-4 py-3 flex items-center gap-3" style={{ borderBottom: `1px solid ${COLORS.glassBorder}`, background: COLORS.panelBg }}>
+        <div className="mr-3">
+          <div className="text-[12px] font-mono" style={{ color: COLORS.textPrimary }}>Execution timeline</div>
+          <div className="text-[9px] font-mono mt-0.5" style={{ color: COLORS.textMuted }}>Select a row to inspect · select the axis to seek</div>
+        </div>
+        <Metric label="NODES" value={rows.length} />
+        <Metric label="PEAK PARALLEL" value={metrics.peak} />
+        <Metric label="RETRIES" value={metrics.attempts} tone={metrics.attempts ? COLORS.waiting_permission : undefined} />
+        <Metric label="ISSUES" value={metrics.issues} tone={metrics.issues ? COLORS.error : undefined} />
       </div>
       <div ref={containerRef} className="flex-1 overflow-auto">
         <canvas ref={canvasRef} onClick={handleClick} style={{ display: 'block', cursor: 'pointer' }} />
@@ -166,19 +179,26 @@ function drawGantt(
     if (isSelected) {
       ctx.fillStyle = COLORS.toggleActive
       ctx.fillRect(0, y, width, ROW_HEIGHT)
+    } else if (i % 2 === 0) {
+      ctx.fillStyle = COLORS.holoBg03
+      ctx.fillRect(0, y, width, ROW_HEIGHT)
     }
 
     // Label, prefixed with the type glyph so categories are scannable.
     ctx.textAlign = 'left'
     ctx.textBaseline = 'middle'
     ctx.fillStyle = spec.accent
-    ctx.fillText(spec.glyph, 6, y + ROW_HEIGHT / 2)
+    ctx.fillText(spec.glyph, 12, y + ROW_HEIGHT / 2)
     ctx.fillStyle = isSelected ? COLORS.textPrimary : COLORS.textDim
-    ctx.fillText(clip(ctx, node.label, LABEL_WIDTH - 30), 20, y + ROW_HEIGHT / 2)
+    ctx.fillText(clip(ctx, node.label, LABEL_WIDTH - 70), 30, y + 12)
+    ctx.font = '9px monospace'
+    ctx.fillStyle = COLORS.textMuted
+    ctx.fillText(node.status.toUpperCase(), 30, y + 25)
+    ctx.font = FONT
 
     // Track
-    const trackY = y + 5
-    const trackH = ROW_HEIGHT - 10
+    const trackY = y + 8
+    const trackH = ROW_HEIGHT - 16
     ctx.fillStyle = COLORS.holoBg03
     ctx.fillRect(LABEL_WIDTH, trackY, barWidth, trackH)
 
@@ -198,6 +218,14 @@ function drawGantt(
     ctx.lineWidth = 1
     ctx.strokeRect(x0 + 0.5, trackY + 0.5, w - 1, trackH - 1)
     ctx.globalAlpha = 1
+
+    if (w > 48) {
+      ctx.font = '9px monospace'
+      ctx.fillStyle = COLORS.textPrimary
+      ctx.textAlign = 'left'
+      ctx.fillText(`${Math.max(0, end - start).toFixed(1)}s`, x0 + 6, y + ROW_HEIGHT / 2)
+      ctx.font = FONT
+    }
 
     // An unfinished bar gets a soft leading edge so it does not read as
     // having ended exactly at the playhead.
@@ -225,6 +253,15 @@ function drawGantt(
   ctx.globalAlpha = 1
 
   ctx.restore()
+}
+
+function Metric({ label, value, tone = COLORS.textPrimary }: { label: string; value: number; tone?: string }) {
+  return (
+    <div className="px-3 py-1.5 rounded-lg min-w-[84px]" style={{ background: COLORS.holoBg05, border: `1px solid ${COLORS.panelSeparator}` }}>
+      <div className="text-[8px] font-mono tracking-wider" style={{ color: COLORS.textMuted }}>{label}</div>
+      <div className="text-[13px] font-mono mt-0.5" style={{ color: tone }}>{value}</div>
+    </div>
+  )
 }
 
 function clip(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {

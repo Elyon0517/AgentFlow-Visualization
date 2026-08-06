@@ -7,18 +7,18 @@
 
 export const COLORS = {
   // Background
-  void: '#050510',
-  hexGrid: '#0d0d1f',
+  void: '#070a12',
+  hexGrid: '#142033',
 
   // Primary Hologram
-  holoBase: '#66ccff',
-  holoBright: '#aaeeff',
+  holoBase: '#55c8ff',
+  holoBright: '#b8e9ff',
   holoHot: '#ffffff',
 
   // Status
-  complete: '#66ffaa',
-  error: '#ff5566',
-  waiting_permission: '#ffaa33',
+  complete: '#45d483',
+  error: '#ff667a',
+  waiting_permission: '#f5b84b',
 
   // Edge/Particle Colors
   dispatch: '#cc88ff',
@@ -26,13 +26,13 @@ export const COLORS = {
   tool: '#ffbb44',
 
   // UI Chrome
-  nodeInterior: 'rgba(10, 15, 40, 0.5)',
-  textPrimary: '#aaeeff',
-  textDim: '#66ccff90',
-  textMuted: '#66ccff50',
+  nodeInterior: 'rgba(13, 20, 35, 0.88)',
+  textPrimary: '#e8edf7',
+  textDim: '#a6b4c8',
+  textMuted: '#708198',
 
   // Glass card
-  glassBorder: 'rgba(100, 200, 255, 0.15)',
+  glassBorder: 'rgba(118, 163, 205, 0.22)',
 
   // Holo background/border opacities (avoids scattered rgba literals)
   holoBg03: 'rgba(100, 200, 255, 0.03)',
@@ -43,9 +43,9 @@ export const COLORS = {
   holoBorder12: 'rgba(100, 200, 255, 0.12)',
 
   // Panel chrome
-  panelBg: 'rgba(8, 12, 24, 0.85)',
-  panelSeparator: 'rgba(100, 200, 255, 0.04)',
-  panelLabelDim: '#66ccff65',
+  panelBg: 'rgba(10, 15, 26, 0.94)',
+  panelSeparator: 'rgba(135, 168, 200, 0.10)',
+  panelLabelDim: '#8496ad',
 
   // Toggle button states
   toggleActive: 'rgba(100, 200, 255, 0.15)',

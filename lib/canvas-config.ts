@@ -58,4 +58,4 @@ export const PERF_OVERLAY = {
 
 /** Combined height of the view bar and the source bar. Full-screen panels
  *  start below it so they never sit underneath the chrome. */
-export const CHROME_HEIGHT = 62
+export const CHROME_HEIGHT = 96

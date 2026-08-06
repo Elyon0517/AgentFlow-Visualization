@@ -60,19 +60,19 @@ export function FlowSourceBar({
 
   return (
     <div
-      className="absolute top-9 left-0 right-0 px-3 py-1.5 text-[10px] font-mono"
-      style={{ background: COLORS.panelBg, borderBottom: `1px solid ${COLORS.holoBorder06}`, zIndex: 49 }}
+      className="absolute top-[52px] left-0 right-0 min-h-11 px-4 py-2.5 text-[11px] font-mono"
+      style={{ background: COLORS.panelBg, borderBottom: `1px solid ${COLORS.glassBorder}`, zIndex: 49 }}
     >
       <div className="flex items-center gap-2 flex-wrap">
         <button onClick={() => setCollapsed(c => !c)} style={{ color: COLORS.textMuted }}>
-          {collapsed ? '▸' : '▾'} source
+          {collapsed ? '▸' : '▾'} DATA SOURCE
         </button>
 
         {(['mock', 'live', 'file'] as const).map(kind => (
           <button
             key={kind}
             onClick={() => onSourceChange(kind)}
-            className="px-1.5 py-0.5 rounded"
+            className="px-2.5 py-1 rounded-md"
             style={{
               background: source === kind ? COLORS.toggleActive : COLORS.toggleInactive,
               border: `1px solid ${COLORS.toggleBorder}`,
@@ -117,7 +117,7 @@ export function FlowSourceBar({
           onClick={onExport}
           disabled={!canExport}
           title="Download the events received so far as JSONL"
-          className="ml-auto px-1.5 py-0.5 rounded"
+          className="ml-auto px-2.5 py-1 rounded-md"
           style={{
             background: COLORS.toggleInactive,
             border: `1px solid ${COLORS.toggleBorder}`,

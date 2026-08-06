@@ -19,7 +19,31 @@ body,
 body {
   /* Matches COLORS.void. Set here so the page is never briefly white before
      the canvas mounts, and so any gap between panels reads as intentional. */
-  background: #050510;
+  background: #070a12;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease, opacity 140ms ease;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #55c8ff;
+  outline-offset: 2px;
+}
+
+input[type='range'] {
+  accent-color: #55c8ff;
+}
+
+* {
+  scrollbar-color: #30445d #0a0f1a;
+  scrollbar-width: thin;
 }

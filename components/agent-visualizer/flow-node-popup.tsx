@@ -41,24 +41,23 @@ export function FlowNodePopup({
   return (
     <div
       {...stopPropagationHandlers}
-      className="absolute top-11 right-3 flex flex-col rounded"
+      className="absolute top-[108px] right-3 bottom-20 flex flex-col rounded-xl overflow-hidden"
       style={{
-        width: 340,
-        maxHeight: 'calc(100vh - 120px)',
+        width: 380,
         background: COLORS.panelBg,
         border: `1px solid ${COLORS.glassBorder}`,
         backdropFilter: 'blur(20px)',
         zIndex: 100,
       }}
     >
-      <div className="px-3 pt-3">
+      <div className="px-4 pt-4 pb-2" style={{ borderBottom: `1px solid ${COLORS.panelSeparator}` }}>
         <PanelHeader
           onClose={onClose}
           actions={
             <button
               onClick={onFocusPath}
               title="Highlight this node's upstream and downstream path"
-              className="px-1.5 py-0.5 rounded text-[9px] font-mono mr-1"
+              className="px-2 py-1 rounded-md text-[10px] font-mono mr-1"
               style={{
                 background: isFocused ? COLORS.toggleActive : COLORS.toggleInactive,
                 border: `1px solid ${COLORS.toggleBorder}`,
@@ -69,14 +68,14 @@ export function FlowNodePopup({
             </button>
           }
         >
-          <span className="text-[10px]" style={{ color: spec.accent }}>{node.icon ?? spec.glyph}</span>
-          <span className="text-[12px] font-mono font-semibold truncate" style={{ color: COLORS.textPrimary }}>
+          <span className="w-8 h-8 flex items-center justify-center rounded-lg text-[13px]" style={{ color: spec.accent, background: spec.accent + '14' }}>{node.icon ?? spec.glyph}</span>
+          <span className="text-[13px] font-mono font-semibold truncate" style={{ color: COLORS.textPrimary }}>
             {node.label}
           </span>
         </PanelHeader>
       </div>
 
-      <div className="overflow-y-auto px-3 pb-3 flex-1 min-h-0">
+      <div className="overflow-y-auto px-4 py-3 flex-1 min-h-0">
         {/* ── Status ── */}
         <Section>
           <div className="flex items-center gap-2 flex-wrap">

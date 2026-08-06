@@ -17,9 +17,9 @@ import { shapeBoundaryPoint } from './flow-shapes'
 import { getGlowSprite } from './render-cache'
 
 const EDGE = {
-  idleAlpha: 0.13,
-  activeAlpha: 0.34,
-  focusedIdleAlpha: 0.2,
+  idleAlpha: 0.16,
+  activeAlpha: 0.5,
+  focusedIdleAlpha: 0.28,
   startWidth: 2.2,
   endWidth: 1.1,
   arrowLength: 9,
@@ -122,7 +122,9 @@ export function drawFlowEdges(ctx: CanvasRenderingContext2D, options: DrawEdgesO
     const spec = getEdgeKindSpec(edge.kind)
     const baseAlpha = isActive ? EDGE.activeAlpha : inFocus ? EDGE.focusedIdleAlpha : EDGE.idleAlpha
     const alpha = baseAlpha * edge.opacity * (inFocus ? 1 : 0.35)
-    const color = isActive ? spec.color : COLORS.holoBase
+    // Edge kinds keep their own hue even at rest, making request/response,
+    // data, handoff, and error channels readable without waiting for motion.
+    const color = spec.color
 
     ctx.save()
     drawTaperedBezier(

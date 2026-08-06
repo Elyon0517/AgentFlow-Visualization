@@ -82,7 +82,9 @@ export function FlowCanvas({
   // ─── Setup ─────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    bloomRef.current = new BloomRenderer(0.45)
+    // Bloom is reserved for active/selected state; a lower global strength
+    // keeps finished runs crisp instead of turning every label into a glow.
+    bloomRef.current = new BloomRenderer(0.28)
     depthParticlesRef.current = createDepthParticles(dimensions.width, dimensions.height)
     return () => { bloomRef.current = null }
     // Particles are created once; the draw loop handles resizing.

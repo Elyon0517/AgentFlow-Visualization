@@ -6,11 +6,18 @@ An interactive, framework-agnostic visualizer for AI and agent workflows. Feed i
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 
+## Demo
+
+The animation below is captured from the bundled mock workflow running in the application at 2× speed. It exercises node creation, concurrent API work, data-transfer particles, a retry, and automatic graph layout.
+
+![AgentFlow Visualization demo](assets/agentflow-demo.gif)
+
 ## Features
 
+- Mission-control interface with a focused graph workspace, display filters, and node inspector
 - Animated canvas graph with spawn, completion, failure, edge, and data-transfer effects
 - Force-directed layered layout with pan, zoom, selection, filtering, and path focus
-- Current Run, Timeline, and structured Logs views backed by the same run state
+- Graph, execution Timeline, and structured Logs views backed by the same run state
 - Built-in mock options-trading workflow for immediate exploration
 - Live Server-Sent Events (SSE) input with reconnection and event validation
 - JSONL import, drag-and-drop replay, URL-based replay, and run export
