@@ -119,22 +119,40 @@ export class FlowLayout {
     for (const [id, node] of graphNodes) {
       const existing = this.nodes.get(id)
       if (existing) {
-        if (existing.depth !== node.depth) { existing.depth = node.depth; structureChanged = true }
+        if (existing.depth !== node.depth) {
+          existing.depth = node.depth
+          // A placeholder can learn its real depth while its spawn animation
+          // is still playing. Keep that first appearance in the correct layer
+          // instead of holding it at the origin and releasing it into a long
+          // horizontal flight.
+          if (existing.pinHold > 0 && !existing.dragging) {
+            const layerX = node.depth * LAYOUT.layerSpacing
+            existing.x = layerX
+            existing.fx = layerX
+            existing.vx = 0
+          }
+          structureChanged = true
+        }
         existing.radius = radiusOf(node)
         continue
       }
 
+      // Reducer coordinates are deterministic seeds, but placeholders may
+      // carry x=0 even when recomputed graph depth already places them several
+      // stages downstream. Start directly in the resolved layer; the spawn
+      // effect should be a local fade/scale, not a journey across the graph.
+      const layerX = node.depth * LAYOUT.layerSpacing
       const entry: LayoutNode = {
         id,
         depth: node.depth,
         radius: radiusOf(node),
-        x: node.x,
+        x: layerX,
         y: node.y,
         vx: 0,
         vy: 0,
         // Held at the entry position for a moment so the spawn animation plays
         // against a still background instead of a graph-wide shove.
-        fx: node.x,
+        fx: layerX,
         fy: node.y,
         pinHold: LAYOUT.spawnPinHold,
         dragging: false,

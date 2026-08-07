@@ -59,7 +59,7 @@ export function FlowLogsPanel({ logs, onSelectNode, selectedNodeId }: FlowLogsPa
             <div className="text-[12px] font-mono" style={{ color: COLORS.textPrimary }}>Structured execution log</div>
             <div className="text-[9px] font-mono mt-0.5" style={{ color: COLORS.textMuted }}>Producer-authored reasoning, observations, and outcomes</div>
           </div>
-          <span className="text-[10px] font-mono px-2.5 py-1 rounded-md" style={{ color: COLORS.textDim, background: COLORS.holoBg05 }}>
+          <span className="af-button text-[10px] font-mono px-2.5 py-1" style={{ color: COLORS.textDim, background: COLORS.holoBg05 }}>
             {filtered.length} / {logs.length} entries
           </span>
         </div>
@@ -68,7 +68,7 @@ export function FlowLogsPanel({ logs, onSelectNode, selectedNodeId }: FlowLogsPa
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="search reason, action, observation…"
-          className="px-3 py-2 rounded-lg text-[11px] font-mono outline-none"
+          className="px-3 py-2 text-[11px] font-mono outline-none"
           style={{
             background: COLORS.holoBg05,
             border: `1px solid ${COLORS.toggleBorder}`,
@@ -107,7 +107,7 @@ export function FlowLogsPanel({ logs, onSelectNode, selectedNodeId }: FlowLogsPa
             <button
               key={`${entry.nodeId}-${entry.at}-${i}`}
               onClick={() => onSelectNode(entry.nodeId)}
-              className="w-full text-left px-4 py-3 rounded-xl"
+              className="af-panel w-full text-left px-4 py-3"
               style={{
                 background: entry.nodeId === selectedNodeId ? COLORS.toggleActive : COLORS.panelBg,
                 border: `1px solid ${entry.nodeId === selectedNodeId ? COLORS.holoBase + '55' : COLORS.panelSeparator}`,
@@ -121,7 +121,7 @@ export function FlowLogsPanel({ logs, onSelectNode, selectedNodeId }: FlowLogsPa
                 <span className="text-[11px] font-mono font-semibold" style={{ color: COLORS.textPrimary }}>
                   {entry.nodeLabel}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-mono" style={{ color: levelColor, background: levelColor + '12' }}>{entry.log.phase}</span>
+                <span className="af-button px-2 py-0.5 text-[9px] font-mono" style={{ color: levelColor, background: levelColor + '12' }}>{entry.log.phase}</span>
                 {entry.log.confidence != null && <span className="ml-auto text-[9px] font-mono" style={{ color: COLORS.textMuted }}>confidence {Math.round(entry.log.confidence * 100)}%</span>}
               </div>
               <div className="text-[12px] font-mono mb-2" style={{ color: COLORS.textPrimary }}>{entry.log.summary}</div>
@@ -143,7 +143,7 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
   return (
     <button
       onClick={onClick}
-      className="px-2.5 py-1.5 rounded-md text-[10px] font-mono"
+      className="af-button px-2.5 py-1.5 text-[10px] font-mono"
       style={{
         background: active ? COLORS.toggleActive : COLORS.toggleInactive,
         border: `1px solid ${COLORS.toggleBorder}`,

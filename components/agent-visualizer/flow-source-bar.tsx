@@ -60,38 +60,38 @@ export function FlowSourceBar({
 
   return (
     <div
-      className="absolute top-[52px] left-0 right-0 min-h-11 px-4 py-2.5 text-[11px] font-mono"
-      style={{ background: COLORS.panelBg, borderBottom: `1px solid ${COLORS.glassBorder}`, zIndex: 49 }}
+      className="absolute top-[52px] left-0 right-0 min-h-11 px-4 py-2.5 text-[10px] font-mono"
+      style={{ background: 'rgba(5, 10, 7, 0.97)', borderBottom: `1px solid ${COLORS.glassBorder}`, zIndex: 49 }}
     >
       <div className="flex items-center gap-2 flex-wrap">
-        <button onClick={() => setCollapsed(c => !c)} style={{ color: COLORS.textMuted }}>
-          {collapsed ? '▸' : '▾'} DATA SOURCE
+        <button className="af-button mr-2" onClick={() => setCollapsed(c => !c)} style={{ color: COLORS.holoBase }}>
+          {collapsed ? '＋' : '−'} INPUT BUS / A
         </button>
 
         {(['mock', 'live', 'file'] as const).map(kind => (
           <button
             key={kind}
             onClick={() => onSourceChange(kind)}
-            className="px-2.5 py-1 rounded-md"
+            className="af-button px-2.5 py-1"
             style={{
               background: source === kind ? COLORS.toggleActive : COLORS.toggleInactive,
               border: `1px solid ${COLORS.toggleBorder}`,
               color: source === kind ? COLORS.holoBase : COLORS.textMuted,
             }}
           >
-            {kind === 'mock' ? 'Demo' : kind === 'live' ? 'Live' : 'File'}
+            {kind === 'mock' ? 'SIM' : kind === 'live' ? 'SSE' : 'JSONL'}
           </button>
         ))}
 
         {source === 'live' && (
           <span className="flex items-center gap-1.5" style={{ color: STATUS_COLOR[streamStatus] }}>
             <span
-              className="inline-block w-1.5 h-1.5 rounded-full"
+              className={`inline-block w-1.5 h-1.5 rounded-full ${streamStatus === 'open' ? 'af-live-dot' : ''}`}
               style={{
                 background: STATUS_COLOR[streamStatus],
                 // Only a genuinely open stream pulses; a reconnect loop that
                 // animates identically would read as healthy.
-                animation: streamStatus === 'open' ? 'none' : undefined,
+                animation: streamStatus === 'open' ? undefined : 'none',
               }}
             />
             {STATUS_LABEL[streamStatus]}
@@ -117,7 +117,7 @@ export function FlowSourceBar({
           onClick={onExport}
           disabled={!canExport}
           title="Download the events received so far as JSONL"
-          className="ml-auto px-2.5 py-1 rounded-md"
+          className="af-button ml-auto px-2.5 py-1"
           style={{
             background: COLORS.toggleInactive,
             border: `1px solid ${COLORS.toggleBorder}`,
@@ -125,7 +125,7 @@ export function FlowSourceBar({
             opacity: canExport ? 1 : 0.4,
           }}
         >
-          ↓ Export .jsonl
+          ↓ Export trace
         </button>
       </div>
 
@@ -137,7 +137,7 @@ export function FlowSourceBar({
             onKeyDown={e => { if (e.key === 'Enter' && !connected) onConnect() }}
             placeholder="http://127.0.0.1:8000/flow/stream"
             spellCheck={false}
-            className="px-2 py-1 rounded outline-none flex-1"
+            className="px-2 py-1 outline-none flex-1"
             style={{
               background: COLORS.holoBg05,
               border: `1px solid ${COLORS.toggleBorder}`,
@@ -147,7 +147,7 @@ export function FlowSourceBar({
           />
           <button
             onClick={connected ? onDisconnect : onConnect}
-            className="px-2 py-1 rounded"
+            className="af-button px-2 py-1"
             style={{
               background: COLORS.toggleActive,
               border: `1px solid ${COLORS.toggleBorder}`,
@@ -163,7 +163,7 @@ export function FlowSourceBar({
         <div className="flex items-center gap-2 mt-1.5">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-2 py-1 rounded"
+            className="af-button px-2 py-1"
             style={{ background: COLORS.toggleActive, border: `1px solid ${COLORS.toggleBorder}`, color: COLORS.holoBase }}
           >
             Choose .jsonl…

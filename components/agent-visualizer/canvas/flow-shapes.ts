@@ -9,12 +9,21 @@
 import type { NodeShape } from '@/lib/flow/node-registry'
 import { drawHexagon } from './draw-misc'
 
-/** Rounded rectangle, slightly wider than tall — the default block shape. */
+/** Chamfered module housing — the default engineering-diagram block. */
 function traceRounded(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
   const w = r * 2.2
   const h = r * 1.5
+  const cut = r * 0.22
   ctx.beginPath()
-  ctx.roundRect(x - w / 2, y - h / 2, w, h, r * 0.28)
+  ctx.moveTo(x - w / 2 + cut, y - h / 2)
+  ctx.lineTo(x + w / 2 - cut, y - h / 2)
+  ctx.lineTo(x + w / 2, y - h / 2 + cut)
+  ctx.lineTo(x + w / 2, y + h / 2 - cut)
+  ctx.lineTo(x + w / 2 - cut, y + h / 2)
+  ctx.lineTo(x - w / 2 + cut, y + h / 2)
+  ctx.lineTo(x - w / 2, y + h / 2 - cut)
+  ctx.lineTo(x - w / 2, y - h / 2 + cut)
+  ctx.closePath()
 }
 
 /** Pill — reads as an endpoint you call out to. */

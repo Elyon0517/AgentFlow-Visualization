@@ -38,6 +38,32 @@ const DRAW = {
   pulseExpand: 34,
 } as const
 
+/** Instrument brackets around the active inspection target. */
+function drawTargetBrackets(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  halfW: number,
+  halfH: number,
+  color: string,
+  selected: boolean,
+): void {
+  const gap = 9
+  const len = selected ? 11 : 7
+  const left = x - halfW - gap
+  const right = x + halfW + gap
+  const top = y - halfH - gap
+  const bottom = y + halfH + gap
+  ctx.beginPath()
+  ctx.moveTo(left, top + len); ctx.lineTo(left, top); ctx.lineTo(left + len, top)
+  ctx.moveTo(right - len, top); ctx.lineTo(right, top); ctx.lineTo(right, top + len)
+  ctx.moveTo(left, bottom - len); ctx.lineTo(left, bottom); ctx.lineTo(left + len, bottom)
+  ctx.moveTo(right - len, bottom); ctx.lineTo(right, bottom); ctx.lineTo(right, bottom - len)
+  ctx.strokeStyle = color + (selected ? 'dd' : '88')
+  ctx.lineWidth = selected ? 1.4 : 1
+  ctx.stroke()
+}
+
 // ─── Inner motion ────────────────────────────────────────────────────────────
 
 /** Motion played inside a running node. Pure function of (time, radius) —
@@ -263,6 +289,20 @@ function drawSingleNode(
   ctx.fillStyle = COLORS.nodeInterior
   ctx.fill()
 
+  // Internal datum lines make each node read like a schematic component.
+  ctx.save()
+  traceNodeShape(ctx, spec.shape, x, y, r)
+  ctx.clip()
+  ctx.strokeStyle = spec.accent + '12'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(x - halfW, y)
+  ctx.lineTo(x + halfW, y)
+  ctx.moveTo(x, y - halfH)
+  ctx.lineTo(x, y + halfH)
+  ctx.stroke()
+  ctx.restore()
+
   // Border. Skipped nodes are dashed to read as "never ran".
   ctx.strokeStyle = color + alphaHex(borderAlpha(node, time))
   ctx.lineWidth = isSelected || isHovered ? 2.4 : 1.8
@@ -270,6 +310,8 @@ function drawSingleNode(
   else if (node.status === 'success') ctx.setLineDash([5, 3])
   ctx.stroke()
   ctx.setLineDash([])
+
+  if (isSelected || isHovered) drawTargetBrackets(ctx, x, y, halfW, halfH, color, isSelected)
 
   if (spec.shape === 'cylinder') {
     drawCylinderLid(ctx, x, y, r)

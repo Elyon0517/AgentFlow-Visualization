@@ -4,8 +4,8 @@
    Tailwind is used only for layout utilities. The one thing it still needs
    from a theme is the font stacks behind `font-sans` / `font-mono`. */
 @theme inline {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
 }
 
 html,
@@ -17,11 +17,10 @@ body,
 }
 
 body {
-  /* Matches COLORS.void. Set here so the page is never briefly white before
-     the canvas mounts, and so any gap between panels reads as intentional. */
-  background: #070a12;
+  background: #050806;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
 }
 
 button,
@@ -33,17 +32,164 @@ button {
   transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease, opacity 140ms ease;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid #55c8ff;
+  outline: 1px solid #79f2c0;
   outline-offset: 2px;
 }
 
 input[type='range'] {
-  accent-color: #55c8ff;
+  accent-color: #79f2c0;
+  height: 2px;
 }
 
 * {
-  scrollbar-color: #30445d #0a0f1a;
+  scrollbar-color: #315646 #08100c;
   scrollbar-width: thin;
+}
+
+::selection {
+  color: #050806;
+  background: #79f2c0;
+}
+
+/* Instrument-panel primitives shared by the React chrome. */
+.af-shell {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 70% 10%, rgba(44, 127, 94, 0.08), transparent 35%),
+    #050806;
+}
+
+.af-scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0.11;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 3px,
+    rgba(213, 255, 233, 0.08) 4px
+  );
+  mix-blend-mode: screen;
+}
+
+.af-scanlines::after {
+  content: '';
+  position: absolute;
+  inset: -30% 0 auto;
+  height: 24%;
+  background: linear-gradient(to bottom, transparent, rgba(121, 242, 192, 0.035), transparent);
+  animation: af-scan 8s linear infinite;
+}
+
+.af-panel {
+  border-radius: 2px !important;
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.32), inset 0 1px rgba(255, 255, 255, 0.015);
+}
+
+/* Normal-flow cards need a positioning context for their corner marks. Panels
+   that already declare `absolute` must keep it — overriding that utility made
+   the transport bar participate in document flow and drift between views. */
+.af-panel:not(.absolute) {
+  position: relative;
+}
+
+.af-panel::before,
+.af-panel::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+}
+
+.af-panel::before {
+  left: -1px;
+  top: -1px;
+  border-left: 1px solid #79f2c0;
+  border-top: 1px solid #79f2c0;
+}
+
+.af-panel::after {
+  right: -1px;
+  bottom: -1px;
+  border-right: 1px solid #79f2c0;
+  border-bottom: 1px solid #79f2c0;
+}
+
+.af-button {
+  border-radius: 1px !important;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.af-button:hover:not(:disabled) {
+  border-color: rgba(121, 242, 192, 0.44) !important;
+  color: #c4ffe5 !important;
+  background: rgba(121, 242, 192, 0.1) !important;
+}
+
+.af-kicker {
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.af-readout {
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 12px rgba(121, 242, 192, 0.18);
+}
+
+.af-live-dot {
+  box-shadow: 0 0 0 3px rgba(101, 242, 157, 0.06), 0 0 12px rgba(101, 242, 157, 0.5);
+  animation: af-pulse 1.8s ease-in-out infinite;
+}
+
+.af-viewport-label {
+  position: absolute;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  letter-spacing: 0.16em;
+  color: rgba(158, 181, 169, 0.64);
+  text-transform: uppercase;
+}
+
+.af-viewport-label::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  margin-right: 8px;
+  vertical-align: middle;
+  background: #79f2c0;
+  box-shadow: 0 0 8px rgba(121, 242, 192, 0.5);
+}
+
+@keyframes af-scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(560%); }
+}
+
+@keyframes af-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .af-scanlines::after,
+  .af-live-dot {
+    animation: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .af-run-summary {
+    display: none;
+  }
 }

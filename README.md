@@ -27,7 +27,7 @@ AgentFlow does **not** expose private model chain-of-thought. The “logic” sh
 
 ## Demo
 
-The animation below is captured from the bundled mock workflow running in the application at 2× speed. It exercises node creation, concurrent API work, data-transfer particles, a retry, and automatic graph layout.
+The animation below captures the rebuilt Runtime Instrument interface running the bundled mock workflow at 2× speed. It shows direct-in-layer node spawning, concurrent API work, smooth data-transfer particles, a retry, and automatic graph layout.
 
 ![AgentFlow Visualization demo](assets/agentflow-demo.gif)
 

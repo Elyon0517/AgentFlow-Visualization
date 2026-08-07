@@ -41,7 +41,7 @@ export function FlowNodePopup({
   return (
     <div
       {...stopPropagationHandlers}
-      className="absolute top-[108px] right-3 bottom-20 flex flex-col rounded-xl overflow-hidden"
+      className="af-panel absolute top-[108px] right-3 bottom-20 flex flex-col overflow-hidden"
       style={{
         width: 380,
         background: COLORS.panelBg,
@@ -57,18 +57,18 @@ export function FlowNodePopup({
             <button
               onClick={onFocusPath}
               title="Highlight this node's upstream and downstream path"
-              className="px-2 py-1 rounded-md text-[10px] font-mono mr-1"
+              className="af-button px-2 py-1 text-[9px] font-mono mr-1"
               style={{
                 background: isFocused ? COLORS.toggleActive : COLORS.toggleInactive,
                 border: `1px solid ${COLORS.toggleBorder}`,
                 color: isFocused ? COLORS.holoBase : COLORS.textMuted,
               }}
             >
-              path
+              signal path
             </button>
           }
         >
-          <span className="w-8 h-8 flex items-center justify-center rounded-lg text-[13px]" style={{ color: spec.accent, background: spec.accent + '14' }}>{node.icon ?? spec.glyph}</span>
+          <span className="w-8 h-8 flex items-center justify-center text-[13px]" style={{ color: spec.accent, background: spec.accent + '14', border: `1px solid ${spec.accent}44` }}>{node.icon ?? spec.glyph}</span>
           <span className="text-[13px] font-mono font-semibold truncate" style={{ color: COLORS.textPrimary }}>
             {node.label}
           </span>
@@ -255,7 +255,7 @@ function Field({ label, value, wrap }: { label: string; value: string; wrap?: bo
 function Pill({ color, children }: { color: string; children: React.ReactNode }) {
   return (
     <span
-      className="px-1.5 py-0.5 rounded text-[9px] font-mono"
+      className="af-button px-1.5 py-0.5 text-[9px] font-mono"
       style={{ background: color + '18', border: `1px solid ${color}40`, color }}
     >
       {children}

@@ -257,7 +257,7 @@ function drawGantt(
 
 function Metric({ label, value, tone = COLORS.textPrimary }: { label: string; value: number; tone?: string }) {
   return (
-    <div className="px-3 py-1.5 rounded-lg min-w-[84px]" style={{ background: COLORS.holoBg05, border: `1px solid ${COLORS.panelSeparator}` }}>
+    <div className="af-panel px-3 py-1.5 min-w-[84px]" style={{ background: COLORS.holoBg05, border: `1px solid ${COLORS.panelSeparator}` }}>
       <div className="text-[8px] font-mono tracking-wider" style={{ color: COLORS.textMuted }}>{label}</div>
       <div className="text-[13px] font-mono mt-0.5" style={{ color: tone }}>{value}</div>
     </div>

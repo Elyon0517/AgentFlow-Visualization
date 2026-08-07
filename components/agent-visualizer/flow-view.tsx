@@ -28,9 +28,9 @@ const SPEEDS = [0.5, 1, 2, 4]
 type ViewMode = 'run' | 'timeline' | 'logs'
 
 const VIEWS: Array<{ id: ViewMode; label: string }> = [
-  { id: 'run', label: 'Graph' },
-  { id: 'timeline', label: 'Timeline' },
-  { id: 'logs', label: 'Logs' },
+  { id: 'run', label: '01 / TOPOLOGY' },
+  { id: 'timeline', label: '02 / TIMING' },
+  { id: 'logs', label: '03 / TELEMETRY' },
 ]
 
 /** `?stream=<url>` connects on load; `?replay=<url>` loads a saved run. */
@@ -195,14 +195,15 @@ export function FlowView() {
   const timelineMax = Math.max(duration, currentTime, 1)
 
   return (
-    <div className="h-screen w-screen relative overflow-hidden" style={{ background: COLORS.void }}>
+    <div className="af-shell h-screen w-screen relative overflow-hidden" style={{ background: COLORS.void }}>
+      <div className="af-scanlines" aria-hidden="true" />
       {/* The canvas stays mounted across view switches — remounting would
           discard the settled layout and replay every spawn animation. */}
       <div
         className="absolute bottom-0 transition-[left,right] duration-200"
         style={{
           top: 96,
-          left: filtersOpen && view === 'run' ? 234 : 0,
+          left: filtersOpen && view === 'run' ? 248 : 0,
           right: selectedNode && view === 'run' ? 404 : 0,
           visibility: view === 'run' ? 'visible' : 'hidden',
         }}
@@ -218,6 +219,8 @@ export function FlowView() {
           pauseAutoFit={selectedNodeId !== null}
           onSelectNode={setSelectedNodeId}
         />
+        <div className="af-viewport-label left-7 top-5 text-[8px]">runtime topology / live field</div>
+        <div className="af-viewport-label right-7 top-5 text-[8px]">grid ref. af–01</div>
       </div>
 
       {view === 'timeline' && (
@@ -282,32 +285,39 @@ export function FlowView() {
 
       {/* ── Mission-control header ── */}
       <div
-        className="absolute top-0 left-0 right-0 h-[52px] flex items-center gap-5 px-4 font-mono"
-        style={{ background: COLORS.panelBg, borderBottom: `1px solid ${COLORS.glassBorder}`, zIndex: 50 }}
+        className="absolute top-0 left-0 right-0 h-[52px] flex items-center gap-4 px-4 font-mono"
+        style={{
+          background: 'linear-gradient(90deg, rgba(8,16,12,.99), rgba(5,10,7,.97))',
+          borderBottom: `1px solid ${COLORS.glassBorder}`,
+          boxShadow: '0 8px 30px rgba(0,0,0,.32)',
+          zIndex: 50,
+        }}
       >
-        <div className="flex items-center gap-2 min-w-[210px]">
+        <div className="flex items-center gap-3 min-w-[218px]">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[15px]"
-            style={{ background: COLORS.toggleActive, border: `1px solid ${COLORS.toggleBorder}`, color: COLORS.holoBase }}
+            className="relative w-8 h-8 flex items-center justify-center text-[10px] font-semibold tracking-widest"
+            style={{ background: COLORS.toggleActive, border: `1px solid ${COLORS.holoBase}`, color: COLORS.holoBase, boxShadow: `inset 0 0 16px ${COLORS.toggleActive}` }}
           >
-            ⬡
+            AF
+            <span className="absolute -right-1 -top-1 w-1.5 h-1.5" style={{ background: COLORS.holoBase }} />
           </div>
           <div className="leading-tight">
-            <div className="text-[12px] font-semibold tracking-[0.08em]" style={{ color: COLORS.textPrimary }}>AGENTFLOW</div>
-            <div className="text-[9px] tracking-[0.12em]" style={{ color: COLORS.textMuted }}>MISSION CONTROL</div>
+            <div className="text-[12px] font-semibold tracking-[0.14em] af-readout" style={{ color: COLORS.textPrimary }}>AGENTFLOW</div>
+            <div className="text-[8px] tracking-[0.2em]" style={{ color: COLORS.holoBase }}>RUNTIME INSTRUMENT</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: COLORS.holoBg05 }}>
+        <div className="flex items-center gap-px p-px" style={{ background: COLORS.toggleBorder }}>
           {VIEWS.map(v => (
             <button
               key={v.id}
               onClick={() => setView(v.id)}
-              className="px-3 py-1.5 rounded-md text-[11px]"
+              className="af-button px-3 py-2 text-[9px]"
               style={{
-                background: view === v.id ? COLORS.toggleActive : 'transparent',
-                border: `1px solid ${view === v.id ? COLORS.toggleBorder : 'transparent'}`,
-                color: view === v.id ? COLORS.textPrimary : COLORS.textMuted,
+                background: view === v.id ? COLORS.toggleActive : COLORS.panelBg,
+                border: 'none',
+                boxShadow: view === v.id ? `inset 0 -1px ${COLORS.holoBase}` : 'none',
+                color: view === v.id ? COLORS.holoBright : COLORS.textMuted,
               }}
             >
               {v.label}
@@ -315,13 +325,14 @@ export function FlowView() {
           ))}
         </div>
 
-        <div className="min-w-0 flex-1 border-l pl-5" style={{ borderColor: COLORS.panelSeparator }}>
+        <div className="af-run-summary min-w-0 flex-1 border-l pl-4" style={{ borderColor: COLORS.panelSeparator }}>
           <div className="flex items-center gap-2">
-            <span className="truncate text-[12px]" style={{ color: COLORS.textPrimary, maxWidth: 320 }}>
+            <span className="text-[8px] af-kicker" style={{ color: COLORS.textMuted }}>active run</span>
+            <span className="truncate text-[11px] af-readout" style={{ color: COLORS.textPrimary, maxWidth: 260 }}>
               {run?.label ?? 'Waiting for workflow'}
             </span>
             <span
-              className="px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider"
+              className="af-button px-1.5 py-0.5 text-[8px] uppercase tracking-wider"
               style={{
                 background: getStatusColor((run?.status === 'completed' ? 'success' : run?.status ?? 'idle') as never) + '18',
                 color: run?.status === 'failed' ? COLORS.error : run?.status === 'completed' ? COLORS.complete : COLORS.holoBase,
@@ -330,10 +341,10 @@ export function FlowView() {
               {run?.status ?? 'idle'}
             </span>
           </div>
-          <div className="mt-1 flex items-center gap-3 text-[9px]" style={{ color: COLORS.textMuted }}>
-            <span>{nodes.size} nodes</span>
-            <span>{eventLog.length} events</span>
-            <span>{timelineMax.toFixed(1)}s duration</span>
+          <div className="mt-1 flex items-center gap-3 text-[8px] af-readout" style={{ color: COLORS.textMuted }}>
+            <span>N {String(nodes.size).padStart(2, '0')}</span>
+            <span>EVT {String(eventLog.length).padStart(3, '0')}</span>
+            <span>T+{timelineMax.toFixed(1)}s</span>
           </div>
         </div>
 
@@ -349,15 +360,15 @@ export function FlowView() {
           <button
             onClick={focusActive}
             title="Focus the node executing right now (F)"
-            className="px-2.5 py-1.5 rounded-md"
+            className="af-button px-2.5 py-1.5"
             style={{ background: COLORS.toggleInactive, border: `1px solid ${COLORS.toggleBorder}`, color: COLORS.textDim }}
           >
-            ⦿ Active
+            [ ] Active
           </button>
           <button
             onClick={() => setFocusPath(v => !v)}
             title="Dim everything outside the selected node's path"
-            className="px-2.5 py-1.5 rounded-md"
+            className="af-button px-2.5 py-1.5"
             style={{
               background: focusPath ? COLORS.toggleActive : COLORS.toggleInactive,
               border: `1px solid ${COLORS.toggleBorder}`,
@@ -365,19 +376,19 @@ export function FlowView() {
               opacity: selectedNodeId ? 1 : 0.45,
             }}
           >
-            ⇄ Path
+            → Path
           </button>
           <button
             onClick={() => setFiltersOpen(v => !v)}
             title="Open display filters"
-            className="px-2.5 py-1.5 rounded-md"
+            className="af-button px-2.5 py-1.5"
             style={{
               background: filtersOpen ? COLORS.toggleActive : COLORS.toggleInactive,
               border: `1px solid ${COLORS.toggleBorder}`,
               color: filtersOpen ? COLORS.textPrimary : COLORS.textDim,
             }}
           >
-            ☷ Display
+            ≡ Layers
           </button>
         </div>
       </div>
@@ -385,22 +396,22 @@ export function FlowView() {
       {/* ── Display filters ── */}
       {filtersOpen && view === 'run' && (
         <aside
-          className="absolute left-3 top-[108px] w-[210px] rounded-xl p-3 font-mono"
+          className="af-panel absolute left-3 top-[108px] w-[222px] p-3 font-mono"
           style={{ background: COLORS.panelBg, border: `1px solid ${COLORS.glassBorder}`, zIndex: 48, backdropFilter: 'blur(18px)' }}
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] tracking-[0.12em]" style={{ color: COLORS.panelLabelDim }}>DISPLAY</span>
+            <span className="text-[9px] tracking-[0.18em]" style={{ color: COLORS.holoBase }}>LAYER CONTROL / 01</span>
             <button onClick={() => setFiltersOpen(false)} className="text-[11px]" style={{ color: COLORS.textMuted }}>✕</button>
           </div>
           <button
             onClick={() => setShowGrid(g => !g)}
-            className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-[11px] mb-2"
-            style={{ background: COLORS.holoBg05, color: COLORS.textDim }}
+            className="af-button w-full flex items-center justify-between px-2.5 py-2 text-[10px] mb-3"
+            style={{ background: COLORS.holoBg05, border: `1px solid ${COLORS.toggleBorder}`, color: COLORS.textDim }}
           >
-            <span>⬡ Background grid</span>
-            <span style={{ color: showGrid ? COLORS.complete : COLORS.textMuted }}>{showGrid ? 'ON' : 'OFF'}</span>
+            <span>GRID / CALIBRATION</span>
+            <span style={{ color: showGrid ? COLORS.complete : COLORS.textMuted }}>{showGrid ? '01' : '00'}</span>
           </button>
-          <div className="text-[9px] mb-1.5 tracking-wider" style={{ color: COLORS.textMuted }}>NODE TYPES</div>
+          <div className="text-[8px] mb-1.5 tracking-[0.18em]" style={{ color: COLORS.textMuted }}>SIGNAL CLASSES</div>
           <div className="grid grid-cols-1 gap-1">
             {allNodeSpecs().map(spec => {
               const hidden = hiddenTypes.has(spec.type)
@@ -408,17 +419,17 @@ export function FlowView() {
                 <button
                   key={spec.type}
                   onClick={() => toggleType(spec.type)}
-                  className="flex items-center justify-between px-2.5 py-1.5 rounded-md text-[10px]"
+                  className="af-button flex items-center justify-between px-2.5 py-1.5 text-[9px]"
                   style={{ background: hidden ? 'transparent' : COLORS.holoBg05, color: hidden ? COLORS.textMuted : COLORS.textPrimary, opacity: hidden ? 0.55 : 1 }}
                 >
-                  <span className="flex items-center gap-2"><span style={{ color: spec.accent }}>{spec.glyph}</span>{spec.displayName}</span>
-                  <span style={{ color: hidden ? COLORS.textMuted : COLORS.complete }}>{hidden ? '—' : '✓'}</span>
+                  <span className="flex items-center gap-2"><span className="w-4 text-center" style={{ color: spec.accent }}>{spec.glyph}</span>{spec.displayName}</span>
+                  <span style={{ color: hidden ? COLORS.textMuted : COLORS.complete }}>{hidden ? '00' : '01'}</span>
                 </button>
               )
             })}
           </div>
           <div className="mt-3 pt-3 text-[9px] leading-relaxed" style={{ borderTop: `1px solid ${COLORS.panelSeparator}`, color: COLORS.textMuted }}>
-            Scroll to zoom · drag to pan<br />F focuses active · Esc clears selection
+            WHEEL / SCALE&nbsp;&nbsp; DRAG / PAN<br />F / ACTIVE&nbsp;&nbsp; ESC / CLEAR
           </div>
         </aside>
       )}
@@ -437,24 +448,35 @@ export function FlowView() {
 
       {/* ── Playback ── */}
       <div
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-mono shadow-2xl"
-        style={{ background: COLORS.panelBg, border: `1px solid ${COLORS.glassBorder}`, zIndex: 50, backdropFilter: 'blur(18px)' }}
+        className="af-panel absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-3 px-3 py-2 text-[10px] font-mono"
+        style={{
+          width: 'min(760px, calc(100vw - 32px))',
+          background: COLORS.panelBg,
+          border: `1px solid ${COLORS.glassBorder}`,
+          zIndex: 50,
+          backdropFilter: 'blur(18px)',
+        }}
       >
-        <button className="w-7 h-7 rounded-md" onClick={isPlaying ? pause : play} title="Play / pause (Space)" style={{ color: COLORS.holoBase, background: COLORS.toggleActive }}>
+        <span className="hidden lg:inline text-[8px] af-kicker" style={{ color: COLORS.textMuted }}>transport</span>
+        <button className="af-button w-7 h-7" onClick={isPlaying ? pause : play} title="Play / pause (Space)" style={{ color: COLORS.holoBase, background: COLORS.toggleActive, border: `1px solid ${COLORS.toggleBorder}` }}>
           {isPlaying ? 'Ⅱ' : '▶'}
         </button>
         <button onClick={restart} title="Restart" style={{ color: COLORS.textDim }}>⟲</button>
 
-        {!isPlaying && (
-          <span
-            className="px-1.5 py-0.5 rounded"
-            style={{ background: COLORS.liveResumeBg, border: `1px solid ${COLORS.liveResumeBorder}`, color: COLORS.liveText }}
-          >
-            PAUSED
-          </span>
-        )}
+        <span
+          className="af-button px-1.5 py-0.5"
+          aria-hidden={isPlaying}
+          style={{
+            background: COLORS.liveResumeBg,
+            border: `1px solid ${COLORS.liveResumeBorder}`,
+            color: COLORS.liveText,
+            visibility: isPlaying ? 'hidden' : 'visible',
+          }}
+        >
+          PAUSED
+        </span>
 
-        <span style={{ color: COLORS.textDim, minWidth: 74 }}>
+        <span className="af-readout" style={{ color: COLORS.textDim, minWidth: 74 }}>
           {currentTime.toFixed(1)}s / {timelineMax.toFixed(1)}s
         </span>
         <input
@@ -471,7 +493,7 @@ export function FlowView() {
             {s}×
           </button>
         ))}
-        <button className="px-2 py-1 rounded-md" onClick={() => setZoomTrigger(n => n + 1)} title="Zoom to fit" style={{ color: COLORS.textDim, background: COLORS.toggleInactive }}>Fit</button>
+        <button className="af-button px-2 py-1" onClick={() => setZoomTrigger(n => n + 1)} title="Zoom to fit" style={{ color: COLORS.textDim, background: COLORS.toggleInactive, border: `1px solid ${COLORS.toggleBorder}` }}>Fit</button>
       </div>
     </div>
   )
