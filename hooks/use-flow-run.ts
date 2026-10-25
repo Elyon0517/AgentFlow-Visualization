@@ -45,6 +45,7 @@ export function useFlowRun(options: UseFlowRunOptions = {}) {
   const layoutRef = useRef<FlowLayout | null>(null)
   const lastFrameMsRef = useRef(0)
   const lastCommitMsRef = useRef(0)
+  const pendingCommitRef = useRef(false)
   const scenarioIndexRef = useRef(0)
 
   /** Focus path, recomputed only when the selection or the edge set changes —
@@ -147,7 +148,12 @@ export function useFlowRun(options: UseFlowRunOptions = {}) {
 
     frameRef.current = next
 
-    if (structureChanged && timestamp - lastCommitMsRef.current >= UI_THROTTLE_MS) {
+    // Keep a dirty flag until the throttled commit actually runs. Otherwise a
+    // terminal event inside the throttle window never reaches React, because
+    // subsequent frames have no new structural events to trigger a commit.
+    pendingCommitRef.current ||= structureChanged
+    if (pendingCommitRef.current && timestamp - lastCommitMsRef.current >= UI_THROTTLE_MS) {
+      pendingCommitRef.current = false
       lastCommitMsRef.current = timestamp
       setState(next)
     }
