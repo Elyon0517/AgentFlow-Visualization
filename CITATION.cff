@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you discuss or build on this project, please cite its original repository."
+type: software
+title: "AgentFlow-Visualization"
+authors:
+  - name: "Elyon0517"
+repository-code: "https://github.com/Elyon0517/AgentFlow-Visualization"
+url: "https://github.com/Elyon0517/AgentFlow-Visualization"
+license: MIT
