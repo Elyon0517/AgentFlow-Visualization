@@ -1,11 +1,6 @@
 'use client'
 
-/**
- * Camera and pointer handling for the flow canvas.
- *
- * All camera state lives in refs and is read by the draw loop — nothing here
- * triggers a React render while panning, zooming, or dragging a node.
- */
+/** Keep camera state in refs to avoid React renders during pan, zoom and drag. */
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react'
 import { CAMERA } from '@/lib/canvas-config'
@@ -42,8 +37,6 @@ export function useFlowViewport({
   const panStateRef = useRef({ active: false, startX: 0, startY: 0, originX: 0, originY: 0, moved: false })
   const dragStateRef = useRef<{ nodeId: string | null; moved: boolean }>({ nodeId: null, moved: false })
 
-  // ─── Coordinate conversion ─────────────────────────────────────────────────
-
   const screenToWorld = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current
     if (!canvas) return { x: 0, y: 0 }
@@ -62,8 +55,6 @@ export function useFlowViewport({
       maxY: (dimensions.height - t.y) / t.scale,
     }
   }, [dimensions])
-
-  // ─── Auto-fit ──────────────────────────────────────────────────────────────
 
   const computeFit = useCallback((): Transform | null => {
     const layout = layoutRef.current
@@ -115,8 +106,6 @@ export function useFlowViewport({
       transformRef.current = { x: nx, y: ny, scale: ns }
     }
   }, [computeFit, pauseAutoFit])
-
-  // ─── Pointer ───────────────────────────────────────────────────────────────
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     if (e.button !== 0) return

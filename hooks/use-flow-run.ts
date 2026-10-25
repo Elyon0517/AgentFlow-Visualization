@@ -1,14 +1,6 @@
 'use client'
 
-/**
- * Drives a workflow run.
- *
- * Follows the frameRef discipline the legacy simulation established and that
- * the acceptance criteria depend on: the animation loop writes to a ref every
- * frame, and React state is committed only when the *structure* changed — new
- * events, playback controls, seek. Sixty frames a second do not produce sixty
- * renders.
- */
+/** Advance animation through refs; commit structural and playback changes to React. */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { advanceFlowAnimations, FLOW_ANIM } from '@/lib/flow/animate'
@@ -18,15 +10,19 @@ import { FlowLayout } from '@/lib/flow/layout'
 import { getNodeSpec } from '@/lib/flow/node-registry'
 import { applyFlowEvent, applyFlowEvents } from '@/lib/flow/reducer'
 
-/** Commit to React at most this often. The canvas is unaffected — it reads
- *  the ref directly. */
+/**
+ * Commit to React at most this often. The canvas is unaffected — it reads
+ * the ref directly.
+ */
 const UI_THROTTLE_MS = 200
 /** 60fps cap, with a millisecond of slack for timer jitter. */
 const MIN_FRAME_MS = 1000 / 60 - 1
 
 export interface UseFlowRunOptions {
-  /** Pre-recorded events played against the clock. Used for the demo and for
-   *  JSONL replay. */
+  /**
+   * Pre-recorded events played against the clock. Used for the demo and for
+   * JSONL replay.
+   */
   scenario?: readonly FlowEvent[]
   /** Live events applied the moment they arrive, ignoring the clock. */
   liveEvents?: readonly FlowEvent[]
@@ -48,8 +44,10 @@ export function useFlowRun(options: UseFlowRunOptions = {}) {
   const pendingCommitRef = useRef(false)
   const scenarioIndexRef = useRef(0)
 
-  /** Focus path, recomputed only when the selection or the edge set changes —
-   *  never per frame. */
+  /**
+   * Focus path, recomputed only when the selection or the edge set changes —
+   * never per frame.
+   */
   const focusSetRef = useRef<Set<string> | null>(null)
   const focusInputRef = useRef<{ nodeId: string | null; edges: FlowState['edges'] | null }>({ nodeId: null, edges: null })
 
@@ -57,8 +55,6 @@ export function useFlowRun(options: UseFlowRunOptions = {}) {
     frameRef.current = next
     setState(next)
   }, [])
-
-  // ─── Layout ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const layout = new FlowLayout()
@@ -75,8 +71,6 @@ export function useFlowRun(options: UseFlowRunOptions = {}) {
     )
   }, [])
 
-  // ─── Scenario reset ────────────────────────────────────────────────────────
-
   useEffect(() => {
     scenarioIndexRef.current = 0
     layoutRef.current?.dispose()
@@ -85,13 +79,13 @@ export function useFlowRun(options: UseFlowRunOptions = {}) {
     // Only re-run when the scenario itself is swapped out.
   }, [scenario, autoPlay, commit])
 
-  // ─── Frame loop ────────────────────────────────────────────────────────────
-
   const frameRef_ = useRef<(ts: number) => void>(() => {})
 
-  /** One frame of work. Scheduling is owned entirely by the effect below —
-   *  this function must never queue the next frame itself, or cancelling the
-   *  loop becomes a race. */
+  /**
+   * One frame of work. Scheduling is owned entirely by the effect below —
+   * this function must never queue the next frame itself, or cancelling the
+   * loop becomes a race.
+   */
   const frame = useCallback((timestamp: number) => {
     const elapsedMs = timestamp - lastFrameMsRef.current
     if (lastFrameMsRef.current && elapsedMs < MIN_FRAME_MS) return
@@ -181,19 +175,11 @@ export function useFlowRun(options: UseFlowRunOptions = {}) {
     return () => { active = false; cancelAnimationFrame(handle) }
   }, [])
 
-  // ─── Controls ──────────────────────────────────────────────────────────────
-
   const play = useCallback(() => commit({ ...frameRef.current, isPlaying: true }), [commit])
   const pause = useCallback(() => commit({ ...frameRef.current, isPlaying: false }), [commit])
   const setSpeed = useCallback((speed: number) => commit({ ...frameRef.current, speed }), [commit])
 
-  /**
-   * Jump to a point in time by replaying from the start.
-   *
-   * Replay rather than interpolation is what makes seeking exact: the same
-   * events through the same reducer produce the same state, so scrubbing
-   * backwards and forwards is lossless.
-   */
+  /** Seek by replaying events from the start through the same deterministic reducer. */
   const seekTo = useCallback((targetTime: number) => {
     const previous = frameRef.current
     const events = scenario ?? previous.eventLog
@@ -251,14 +237,7 @@ export function useFlowRun(options: UseFlowRunOptions = {}) {
     commit({ ...next, currentTime: next.maxTimeReached })
   }, [syncLayout, commit])
 
-  /**
-   * Full length of the timeline.
-   *
-   * For a known scenario this is the whole recording, not just how far
-   * playback has reached — otherwise the scrubber could only ever seek
-   * backwards, which makes replay useless. A live run has no known end, so it
-   * falls back to the furthest point observed.
-   */
+  /** Use the full recording duration for seeking; live input uses the furthest observed time. */
   const duration = scenario && scenario.length > 0
     ? relativeTimeOf(scenario[scenario.length - 1], scenario[0])
     : state.maxTimeReached

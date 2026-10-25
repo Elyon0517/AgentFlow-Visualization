@@ -1,23 +1,6 @@
 /**
- * Demo workflow: an options trading pipeline.
- *
- * Exercises every feature the generic visualizer is meant to support, so it
- * doubles as a manual test fixture:
- *
- *   - all nine node types
- *   - a fan-out into two concurrent API calls that rejoin
- *   - a `waiting` state with a named dependency
- *   - a failure followed by a successful retry (attempt badge)
- *   - a `warning` terminal state distinct from plain success
- *   - an agent handoff mid-run
- *   - memory read at the start and write at the end
- *   - structured logs carrying reason / observation / result
- *
- * Shape:
- *
- *   TradingView Signal → Market Data ─┬─► Heatmap API ─┐
- *                                     └─► Broker API  ─┴─► GEX/VEX → Strategy
- *                                          → Risk → LLM Analysis → Trade Decision
+ * Synthetic options workflow covering all node types, concurrent calls, waits, retries,
+ * warnings, handoffs, memory transfers and structured logs.
  */
 
 import type { FlowEvent, FlowEventType, FlowNodeType, StructuredLog } from './events'
@@ -25,8 +8,6 @@ import type { FlowEvent, FlowEventType, FlowNodeType, StructuredLog } from './ev
 const RUN_ID = 'run_mock_trading_001'
 /** Fixed epoch so replay, screenshots, and tests are byte-identical. */
 const RUN_START_MS = Date.parse('2026-08-04T13:30:00.000Z')
-
-// ─── Builder ─────────────────────────────────────────────────────────────────
 
 interface EmitOptions {
   node?: { id: string; type: FlowNodeType; label: string; group?: string }
@@ -56,8 +37,6 @@ function createBuilder() {
 
   return { events, emit }
 }
-
-// ─── Node catalogue ──────────────────────────────────────────────────────────
 // Business identity lives here as data. The renderer only ever sees `type`.
 
 const N = {
@@ -78,8 +57,6 @@ const N = {
 function log(entry: StructuredLog): { log: StructuredLog } {
   return { log: entry }
 }
-
-// ─── Scenario ────────────────────────────────────────────────────────────────
 
 function buildMockTradingWorkflow(): FlowEvent[] {
   const { events, emit } = createBuilder()

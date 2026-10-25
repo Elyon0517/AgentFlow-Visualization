@@ -1,13 +1,6 @@
 'use client'
 
-/**
- * Logs view.
- *
- * The whole run as a chronological stream of structured log entries, filtered
- * by phase, node, or free text. This is the view you read when you want to
- * know *why* a run did what it did, as opposed to the graph, which shows what
- * ran and in what order.
- */
+/** Chronological execution logs, filtered by phase, node or text. */
 
 import { useMemo, useState } from 'react'
 import { COLORS } from '@/lib/colors'

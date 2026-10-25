@@ -1,11 +1,4 @@
-/**
- * Generic node renderer.
- *
- * Everything visual is resolved from the node type registry and the node's
- * status. There is no branch anywhere in this file on a business concept —
- * "Heatmap API" reaches the screen as `label` text and nothing more. Adding a
- * node category means adding a registry entry, not editing this file.
- */
+/** Resolve node appearance from the type registry and status; business names remain labels. */
 
 import {
   borderAlpha,
@@ -30,8 +23,10 @@ const DRAW = {
   summaryFont: '10px monospace',
   metaFont: '9px monospace',
   labelMaxWidth: 180,
-  /** Below this camera scale, secondary text is skipped — it would be
-   *  unreadable anyway and costs a measureText per node per frame. */
+  /**
+   * Below this camera scale, secondary text is skipped — it would be
+   * unreadable anyway and costs a measureText per node per frame.
+   */
   detailScaleThreshold: 0.42,
   badgeRadius: 7,
   progressRingOffset: 5,
@@ -64,10 +59,10 @@ function drawTargetBrackets(
   ctx.stroke()
 }
 
-// ─── Inner motion ────────────────────────────────────────────────────────────
-
-/** Motion played inside a running node. Pure function of (time, radius) —
- *  no per-node timers, so a replay reproduces it exactly. */
+/**
+ * Motion played inside a running node. Pure function of (time, radius) —
+ * no per-node timers, so a replay reproduces it exactly.
+ */
 function drawRunningMotion(
   ctx: CanvasRenderingContext2D,
   motion: RunningMotion,
@@ -123,8 +118,6 @@ function drawRunningMotion(
       break
   }
 }
-
-// ─── Decorations ─────────────────────────────────────────────────────────────
 
 /** Expanding ring played once when a node reaches a terminal state. */
 function drawCompletionPulse(
@@ -236,8 +229,6 @@ function drawNodeText(
     ctx.fillText(truncateText(ctx, node.error.message, DRAW.labelMaxWidth), x, cursorY)
   }
 }
-
-// ─── Node ────────────────────────────────────────────────────────────────────
 
 export interface DrawNodesOptions {
   nodes: ReadonlyMap<string, FlowNode>
@@ -365,10 +356,10 @@ export function drawFlowNodes(ctx: CanvasRenderingContext2D, options: DrawNodesO
   }
 }
 
-// ─── Hit detection ───────────────────────────────────────────────────────────
-
-/** Topmost node at a world-space point, or null. Iterates in reverse so the
- *  most recently added node — drawn last, on top — wins a tie. */
+/**
+ * Topmost node at a world-space point, or null. Iterates in reverse so the
+ * most recently added node — drawn last, on top — wins a tie.
+ */
 export function findFlowNodeAt(
   x: number, y: number,
   nodes: ReadonlyMap<string, FlowNode>,

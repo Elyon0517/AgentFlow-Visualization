@@ -1,17 +1,7 @@
 /**
- * Event → graph state reducer.
- *
- * The single place where a {@link FlowEvent} becomes graph state. Live SSE
- * playback, JSONL replay, and seek all funnel through here, which is what
- * guarantees a replayed run looks identical to the original.
- *
- * Two invariants worth preserving when editing:
- *
- *  1. **Deterministic.** No `Math.random()`, no `Date.now()`. Spawn jitter is
- *     derived from a hash of the node id so replay reproduces the same layout.
- *  2. **Reference-honest.** Node objects are copied on change; `node.anim` is
- *     the one deliberate exception — it is mutable per-frame state owned by the
- *     animation loop and is carried by reference across updates.
+ * Shared reducer for live input, replay and seeking.
+ * Use deterministic node seeds and copy changed nodes; node.anim remains shared mutable frame
+ * state.
  */
 
 import {
@@ -46,13 +36,13 @@ import {
 /** Events whose payload flows target → source (a result coming back). */
 const RESPONSE_EVENTS = new Set<FlowEvent['eventType']>(['tool.returned', 'memory.read'])
 
-/** Horizontal spacing hint used when seeding a new node's position. The real
- *  layout is settled by d3-force; this only picks a sane starting point so the
- *  node does not fly in from the origin. */
+/**
+ * Horizontal spacing hint used when seeding a new node's position. The real
+ * layout is settled by d3-force; this only picks a sane starting point so the
+ * node does not fly in from the origin.
+ */
 const SEED_STEP_X = 220
 const SEED_SPREAD_Y = 160
-
-// ─── Deterministic helpers ───────────────────────────────────────────────────
 
 function hashId(id: string): number {
   let hash = 0
@@ -65,18 +55,16 @@ function jitter(id: string): number {
   return ((hashId(id) % 1000) / 500) - 1
 }
 
-// ─── Ring buffers ────────────────────────────────────────────────────────────
-
 function pushCapped<T>(list: T[], item: T, cap: number): T[] {
   const next = list.length >= cap ? list.slice(list.length - cap + 1) : list.slice()
   next.push(item)
   return next
 }
 
-// ─── Working state ───────────────────────────────────────────────────────────
-
-/** Mutable containers for one reducer pass. Mirrors `MutableEventState` in
- *  hooks/simulation so the two reducers stay recognizably similar. */
+/**
+ * Mutable containers for one reducer pass. Mirrors `MutableEventState` in
+ * hooks/simulation so the two reducers stay recognizably similar.
+ */
 interface Draft {
   nodes: Map<string, FlowNode>
   edges: FlowEdge[]
@@ -84,8 +72,6 @@ interface Draft {
   logs: FlowLogEntry[]
   edgesChanged: boolean
 }
-
-// ─── Node helpers ────────────────────────────────────────────────────────────
 
 function seedPosition(draft: Draft, parentId: string | null, id: string): { x: number; y: number } {
   const parent = parentId ? draft.nodes.get(parentId) : undefined
@@ -124,11 +110,7 @@ function createNode(
   return node
 }
 
-/**
- * Resolve the node an event is about, creating it if the producer never sent
- * an explicit `node.created`. Producers are allowed to be terse — a bare
- * `node.started` should just work.
- */
+/** Create a placeholder when an event arrives before node.created. */
 function ensureNode(draft: Draft, event: FlowEvent, at: number): FlowNode | null {
   const ref = event.node
   if (!ref) return null
@@ -151,8 +133,10 @@ function ensureNode(draft: Draft, event: FlowEvent, at: number): FlowNode | null
   return updated
 }
 
-/** Referenced-but-unknown endpoint. Better a visible placeholder than a
- *  silently dropped edge — a ghost node is debuggable, a missing edge is not. */
+/**
+ * Referenced-but-unknown endpoint. Better a visible placeholder than a
+ * silently dropped edge — a ghost node is debuggable, a missing edge is not.
+ */
 function ensurePlaceholder(draft: Draft, id: string, at: number): FlowNode {
   const existing = draft.nodes.get(id)
   if (existing) return existing
@@ -166,8 +150,6 @@ function patchNode(draft: Draft, id: string, patch: Partial<FlowNode>): FlowNode
   draft.nodes.set(id, updated)
   return updated
 }
-
-// ─── Status transition ───────────────────────────────────────────────────────
 
 function applyStatus(draft: Draft, node: FlowNode, status: FlowNodeStatus, at: number, event: FlowEvent): void {
   if (node.status === status && status !== 'running') return
@@ -205,17 +187,9 @@ function applyStatus(draft: Draft, node: FlowNode, status: FlowNodeStatus, at: n
   patchNode(draft, node.id, patch)
 }
 
-// ─── Edge / particle helpers ─────────────────────────────────────────────────
-
 interface Endpoints { source: string; target: string }
 
-/**
- * Where this event's data is flowing.
- *
- * Explicit `edge` always wins. Otherwise it is inferred from
- * `parentNodeId` — reversed for response-shaped events, since a returning
- * result travels child → parent.
- */
+/** Prefer an explicit edge; otherwise infer direction from parentNodeId, reversing responses. */
 function resolveEndpoints(event: FlowEvent): Endpoints | null {
   if (event.edge) return { source: event.edge.source, target: event.edge.target }
   if (!event.node || !event.parentNodeId) return null
@@ -228,9 +202,11 @@ function findEdge(draft: Draft, source: string, target: string): FlowEdge | unde
   return draft.edges.find(e => e.source === source && e.target === target)
 }
 
-/** Insert an edge unless the same logical edge already exists. Both the
- *  explicit `edge.created` path and the inferred `parentNodeId` path land
- *  here, which is what keeps duplicates out. */
+/**
+ * Insert an edge unless the same logical edge already exists. Both the
+ * explicit `edge.created` path and the inferred `parentNodeId` path land
+ * here, which is what keeps duplicates out.
+ */
 function ensureEdge(
   draft: Draft, source: string, target: string, kind: FlowEdgeKind, at: number, label?: string,
 ): FlowEdge | null {
@@ -248,14 +224,7 @@ function ensureEdge(
   return edge
 }
 
-/**
- * Attach a particle to the edge that best represents this transfer.
- *
- * A response reuses the existing forward edge with `reverse: true` rather than
- * creating a backwards edge. Two reasons: the graph stays a DAG so depth
- * stays meaningful, and the user sees one channel with traffic in both
- * directions instead of two parallel lines.
- */
+/** Reuse the forward edge for response particles to preserve pipeline depth and a single channel. */
 function spawnParticle(
   draft: Draft, source: string, target: string, kind: FlowEdgeKind, at: number, label?: string, bytes?: number,
 ): void {
@@ -292,8 +261,6 @@ function spawnParticle(
     draft.particles.splice(0, draft.particles.length - MAX_PARTICLES)
   }
 }
-
-// ─── Detail accumulation ─────────────────────────────────────────────────────
 
 function recordDetails(draft: Draft, node: FlowNode, event: FlowEvent, at: number): void {
   const md = event.metadata
@@ -333,10 +300,10 @@ function recordLog(draft: Draft, node: FlowNode, event: FlowEvent, at: number): 
   draft.logs = pushCapped(draft.logs, { nodeId: node.id, nodeLabel: current.label, at, log }, MAX_GLOBAL_LOGS)
 }
 
-// ─── Reducer ─────────────────────────────────────────────────────────────────
-
-/** Run-relative seconds for an event. Clamped at 0 so an event stamped
- *  slightly before `run.started` does not produce negative time. */
+/**
+ * Run-relative seconds for an event. Clamped at 0 so an event stamped
+ * slightly before `run.started` does not produce negative time.
+ */
 function relativeTime(event: FlowEvent, startedAtMs: number): number {
   return Math.max(0, (Date.parse(event.timestamp) - startedAtMs) / 1000)
 }
@@ -461,10 +428,10 @@ export function applyFlowEvents(state: FlowState, events: readonly FlowEvent[]):
   return next
 }
 
-// ─── Derived queries ─────────────────────────────────────────────────────────
-
-/** Edges carrying traffic right now — the "current activity path" as opposed
- *  to the full execution graph. */
+/**
+ * Edges carrying traffic right now — the "current activity path" as opposed
+ * to the full execution graph.
+ */
 export function activeEdgeIds(state: FlowState, now: number): Set<string> {
   const ids = new Set<string>()
   for (const particle of state.particles) ids.add(particle.edgeId)

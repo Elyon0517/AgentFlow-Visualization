@@ -1,11 +1,4 @@
-/**
- * Graph state for the generic workflow visualizer.
- *
- * Mirrors the split that already works well in `hooks/simulation/`:
- * structural data (nodes, edges, logs) is read by React; per-frame visual data
- * lives in `node.anim` / `particles` and is only ever touched by the animation
- * loop via a ref. Nothing here should be mutated from a React render.
- */
+/** React reads structural snapshots; the animation loop mutates node.anim and particles through refs. */
 
 import type {
   FlowEdgeKind,
@@ -16,19 +9,21 @@ import type {
   StructuredLog,
 } from './events'
 
-// ─── Node ────────────────────────────────────────────────────────────────────
-
 /** Per-node visual state. Advanced by the animation loop, never by React. */
 export interface NodeAnim {
   opacity: number
   scale: number
   /** Seconds since the node appeared — drives the spawn animation. */
   spawnAge: number
-  /** Seconds since `status` last changed — drives breathing/pulse phase so
-   *  every node is not synchronized to the same sine wave. */
+  /**
+   * Seconds since `status` last changed — drives breathing/pulse phase so
+   * every node is not synchronized to the same sine wave.
+   */
   statusAge: number
-  /** A single non-looping animation (success flash, failure shake, handoff
-   *  arrival). Cleared once `age >= duration`. */
+  /**
+   * A single non-looping animation (success flash, failure shake, handoff
+   * arrival). Cleared once `age >= duration`.
+   */
   oneShot: { kind: OneShotKind; age: number; duration: number } | null
   /** 1 = fully lit, <1 = dimmed by the focus effect. Lerped, never snapped. */
   focus: number
@@ -87,15 +82,15 @@ export interface FlowNode {
   fx?: number
   fy?: number
   pinned: boolean
-  /** Topological depth from the roots. Drives the left-to-right layered layout.
-   *  Computed incrementally as edges arrive, since node ids are generated at
-   *  run time rather than known up front. */
+  /**
+   * Topological depth from the roots. Drives the left-to-right layered layout.
+   * Computed incrementally as edges arrive, since node ids are generated at
+   * run time rather than known up front.
+   */
   depth: number
 
   anim: NodeAnim
 }
-
-// ─── Edge / particle ─────────────────────────────────────────────────────────
 
 export interface FlowEdge {
   id: string
@@ -105,8 +100,10 @@ export interface FlowEdge {
   label?: string
   createdAt: number
   opacity: number
-  /** Run-relative seconds of the last particle on this edge. Edges active
-   *  within ACTIVE_EDGE_WINDOW_S render as part of the "current path". */
+  /**
+   * Run-relative seconds of the last particle on this edge. Edges active
+   * within ACTIVE_EDGE_WINDOW_S render as part of the "current path".
+   */
   lastActiveAt?: number
 }
 
@@ -114,20 +111,22 @@ export interface FlowParticle {
   id: string
   edgeId: string
   kind: FlowEdgeKind
-  /** Always 0 → 1. Direction is expressed by `reverse`, not by running the
-   *  progress backwards — so source → target stays explicit in the data. */
+  /**
+   * Always 0 → 1. Direction is expressed by `reverse`, not by running the
+   * progress backwards — so source → target stays explicit in the data.
+   */
   progress: number
   /** True for responses travelling target → source along a forward edge. */
   reverse: boolean
   size: number
   label?: string
-  /** Run-relative seconds when the transfer started. Lets a seek reconstruct
-   *  exactly which particles were mid-flight at the target time, so scrubbing
-   *  shows data moving rather than a frozen graph. */
+  /**
+   * Run-relative seconds when the transfer started. Lets a seek reconstruct
+   * exactly which particles were mid-flight at the target time, so scrubbing
+   * shows data moving rather than a frozen graph.
+   */
   spawnedAt: number
 }
-
-// ─── Run / state ─────────────────────────────────────────────────────────────
 
 export interface FlowRun {
   runId: string
@@ -165,8 +164,6 @@ export interface FlowState {
   speed: number
 }
 
-// ─── Caps ────────────────────────────────────────────────────────────────────
-
 export const MAX_LOGS_PER_NODE = 200
 export const MAX_GLOBAL_LOGS = 2000
 export const MAX_REQUESTS_PER_NODE = 50
@@ -174,8 +171,6 @@ export const MAX_FLOW_EVENT_LOG = 20_000
 export const MAX_PARTICLES = 400
 /** Seconds an edge stays in the "current activity" highlight after a particle. */
 export const ACTIVE_EDGE_WINDOW_S = 3
-
-// ─── Particle sizing ─────────────────────────────────────────────────────────
 // Lives here rather than in the node registry so the reducer stays free of any
 // rendering dependency — state must be computable without a canvas or a theme.
 
@@ -189,15 +184,15 @@ export const PARTICLE_BASE_SIZE: Record<FlowEdgeKind, number> = {
   control: 3,
 }
 
-/** Scale a particle by payload size so a large transfer visibly weighs more
- *  than a ping. Log-scaled and capped at 2× — 1 KB and 1 MB should differ,
- *  but not by 1000×. */
+/**
+ * Scale a particle by payload size so a large transfer visibly weighs more
+ * than a ping. Log-scaled and capped at 2× — 1 KB and 1 MB should differ,
+ * but not by 1000×.
+ */
 export function particleSizeForBytes(base: number, bytes?: number): number {
   if (!bytes || bytes <= 0) return base
   return Math.min(base * 2, base * (1 + Math.log10(1 + bytes / 1024) * 0.25))
 }
-
-// ─── Constructors ────────────────────────────────────────────────────────────
 
 export function createNodeAnim(overrides?: Partial<NodeAnim>): NodeAnim {
   return {
@@ -228,8 +223,6 @@ export function createFlowState(overrides?: Partial<FlowState>): FlowState {
   }
 }
 
-// ─── Status helpers ──────────────────────────────────────────────────────────
-
 const TERMINAL_STATUSES = new Set<FlowNodeStatus>(['success', 'warning', 'failed', 'skipped'])
 const ACTIVE_STATUSES = new Set<FlowNodeStatus>(['running', 'waiting'])
 
@@ -252,10 +245,10 @@ export function oneShotForStatus(status: FlowNodeStatus): { kind: OneShotKind; d
   }
 }
 
-// ─── Graph traversal ─────────────────────────────────────────────────────────
-
-/** Nodes reachable upstream and downstream of `rootId`, inclusive.
- *  Used by the focus effect — computed once per selection, never per frame. */
+/**
+ * Nodes reachable upstream and downstream of `rootId`, inclusive.
+ * Used by the focus effect — computed once per selection, never per frame.
+ */
 export function collectConnectedPath(rootId: string, edges: readonly FlowEdge[]): Set<string> {
   const outgoing = new Map<string, string[]>()
   const incoming = new Map<string, string[]>()
@@ -282,12 +275,8 @@ export function collectConnectedPath(rootId: string, edges: readonly FlowEdge[])
 }
 
 /**
- * Node types that are shared stores rather than pipeline stages.
- *
- * A memory node is typically read early and written late, which turns the
- * whole run into one big cycle and collapses the layered layout. Reading or
- * writing memory does not advance you through the pipeline, so those edges are
- * excluded from depth — they are still drawn, and still carry particles.
+ * Exclude shared-store edges from topological depth to avoid memory read/write cycles.
+ * These edges remain visible and carry particles.
  */
 const NON_PIPELINE_TYPES = new Set<FlowNodeType>(['memory'])
 
@@ -305,19 +294,8 @@ function isPipelineEdge(edge: FlowEdge, nodes: Map<string, FlowNode>): boolean {
 }
 
 /**
- * Recompute topological depth for every node.
- *
- * Node ids are generated at run time, so depth cannot be assigned when a node
- * is created — an incoming edge may arrive later and push it right. This runs
- * on edge insertion (cheap: the graphs are hundreds of nodes, not millions)
- * and is cycle-safe via the visit cap.
- *
- * Replaces changed entries with copies rather than mutating node objects in
- * place — the previous state's map may still be held by a React render, and
- * retroactively editing it would produce a stale-but-different snapshot.
- *
- * Returns true when any depth changed, so the caller can skip re-seeding the
- * layout forces on a no-op.
+ * Recompute depth on edge insertion with a cycle-safe visit cap.
+ * Copy changed nodes to preserve React snapshots; return whether any depth changed.
  */
 export function recomputeDepths(nodes: Map<string, FlowNode>, edges: readonly FlowEdge[]): boolean {
   const pipelineEdges = edges.filter(edge => isPipelineEdge(edge, nodes))

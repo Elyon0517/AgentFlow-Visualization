@@ -1,12 +1,4 @@
-/**
- * Live event stream client.
- *
- * Transport-agnostic by construction: the producer only has to deliver
- * `FlowEvent` JSON. Server-Sent Events is the default because the browser
- * reconnects on its own and it rides plain HTTP through proxies and CDNs
- * without an upgrade handshake. A WebSocket transport can be added here
- * without touching anything downstream — see {@link connectFlowStream}.
- */
+/** Receive validated FlowEvent JSON over reconnecting SSE; downstream state is transport-independent. */
 
 import {
   parseFlowJsonl,
@@ -47,13 +39,8 @@ function extractEvents(
 }
 
 /**
- * Ordering note.
- *
- * A single SSE connection preserves order, so each payload is simply sorted by
- * `seq` and handed straight on. No time-based reorder buffer: it would add
- * latency to every live update to compensate for a case that only arises on
- * reconnect — and the reducer already tolerates that, being idempotent on
- * `eventId` and creating placeholders for nodes it has not seen yet.
+ * SSE preserves connection order; sort each payload by seq.
+ * The reducer deduplicates replayed events and tolerates missing predecessors.
  */
 export function connectFlowStream({ url, onEvents, onStatus, onRejected }: StreamOptions): StreamHandle {
   let source: EventSource | null = null
@@ -127,8 +114,6 @@ export function connectFlowStream({ url, onEvents, onStatus, onRejected }: Strea
     },
   }
 }
-
-// ─── File loading ────────────────────────────────────────────────────────────
 
 export interface LoadedRun {
   events: FlowEvent[]

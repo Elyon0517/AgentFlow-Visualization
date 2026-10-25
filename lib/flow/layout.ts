@@ -1,17 +1,6 @@
 /**
- * Layered force layout.
- *
- * Positions live here, in mutable `LayoutNode` objects, and are never written
- * back onto `FlowNode`. That is deliberate: positions change every frame, and
- * copying a few hundred node objects per tick — which is what the legacy
- * simulation does — burns allocations for no benefit. The renderer, hit test,
- * and camera all read positions from this map instead.
- *
- * Two forces do the layered part:
- *   - `forceX` pulls each node toward `depth × LAYER_SPACING`, producing the
- *     left-to-right pipeline reading order.
- *   - `forceY` is a weak pull toward the centreline; collision does the rest,
- *     so nodes at the same depth spread vertically on their own.
+ * Keep mutable positions outside FlowNode snapshots.
+ * forceX follows topological depth; forceY and collision spread nodes vertically.
  */
 
 import {
@@ -35,8 +24,10 @@ export interface LayoutNode extends SimulationNodeDatum {
   radius: number
   x: number
   y: number
-  /** Seconds remaining on the spawn pin. While pinned the node holds its
-   *  entry position so the graph does not visibly recoil when it appears. */
+  /**
+   * Seconds remaining on the spawn pin. While pinned the node holds its
+   * entry position so the graph does not visibly recoil when it appears.
+   */
   pinHold: number
   /** True while the user is dragging — an indefinite pin. */
   dragging: boolean
@@ -49,8 +40,10 @@ interface LayoutLink extends SimulationLinkDatum<LayoutNode> {
 export const LAYOUT = {
   /** Horizontal distance between pipeline stages. */
   layerSpacing: 260,
-  /** How hard a node is pulled to its layer. Strong enough to read as columns,
-   *  loose enough that collision can still resolve overlaps. */
+  /**
+   * How hard a node is pulled to its layer. Strong enough to read as columns,
+   * loose enough that collision can still resolve overlaps.
+   */
   layerStrength: 0.35,
   /** Weak vertical centring; collision provides the actual separation. */
   centerStrength: 0.045,
@@ -61,9 +54,11 @@ export const LAYOUT = {
   velocityDecay: 0.45,
   /** Idle alpha decay. Low so the graph keeps settling gently. */
   alphaDecay: 0.025,
-  /** Energy injected when the graph changes. Kept small — the legacy code used
-   *  `alpha(0.3)` plus 15 synchronous ticks, which is what made the whole
-   *  layout visibly jump every time a node appeared. */
+  /**
+   * Energy injected when the graph changes. Kept small — the legacy code used
+   * `alpha(0.3)` plus 15 synchronous ticks, which is what made the whole
+   * layout visibly jump every time a node appeared.
+   */
   reheatTarget: 0.12,
   /** Seconds the reheat is held before decaying back to rest. */
   reheatHold: 1.2,
@@ -101,13 +96,7 @@ export class FlowLayout {
     return this.nodes.get(id)
   }
 
-  /**
-   * Reconcile the simulation with the current graph.
-   *
-   * Existing nodes keep their object identity, and therefore their velocity —
-   * rebuilding them would reset momentum and cause a visible twitch on every
-   * structural change.
-   */
+  /** Preserve existing simulation objects and velocities when reconciling the graph. */
   sync(
     graphNodes: ReadonlyMap<string, FlowNode>,
     edges: readonly FlowEdge[],
@@ -218,14 +207,7 @@ export class FlowLayout {
     this.sim.tick()
   }
 
-  /**
-   * Run the simulation to rest immediately.
-   *
-   * Used after a seek: the graph at the target time should appear already
-   * settled. Without this the whole layout drifts into place over the next few
-   * seconds, which reads as the visualization being confused about a moment
-   * that is, in fact, fully determined.
-   */
+  /** Settle the layout after seeking so the reconstructed graph appears immediately. */
   settle(iterations = 120): void {
     for (const node of this.nodes.values()) {
       if (node.dragging) continue
@@ -239,8 +221,10 @@ export class FlowLayout {
     this.reheatRemaining = 0
   }
 
-  /** Nodes outside the simulation still need somewhere to sit. Parks them
-   *  below their nearest neighbour instead of leaving them at the origin. */
+  /**
+   * Nodes outside the simulation still need somewhere to sit. Parks them
+   * below their nearest neighbour instead of leaving them at the origin.
+   */
   park(id: string, x: number, y: number): void {
     const node = this.nodes.get(id)
     if (!node) return
@@ -287,12 +271,12 @@ export class FlowLayout {
   }
 }
 
-// ─── Bounds ──────────────────────────────────────────────────────────────────
-
 export interface Bounds { minX: number; minY: number; maxX: number; maxY: number }
 
-/** Bounding box of every positioned node, padded by its radius. Returns null
- *  when there is nothing to frame. */
+/**
+ * Bounding box of every positioned node, padded by its radius. Returns null
+ * when there is nothing to frame.
+ */
 export function layoutBounds(positions: ReadonlyMap<string, LayoutNode>, extraPadding = 0): Bounds | null {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
 

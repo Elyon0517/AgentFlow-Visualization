@@ -1,22 +1,13 @@
 /**
- * Unified AI-workflow event protocol.
- *
- * Deliberately decoupled from any agent framework: Claude Code, Codex, a
- * trading pipeline, or a plain script all emit the same shape. Producers are
- * expected to be sloppy (extra fields, missing optionals, out-of-order
- * delivery), so everything here is validated at the boundary rather than
- * trusted — see {@link validateFlowEvent}.
- *
- * Transport-agnostic: the same JSON works over SSE, a WebSocket, or one event
- * per line in a `.jsonl` file. That is what makes live playback and historical
- * replay share a single code path.
+ * Framework-independent events for live streams and JSONL replay.
+ * Validate untrusted producer data with validateFlowEvent.
  */
 
-// ─── Enums ───────────────────────────────────────────────────────────────────
-
-/** Node categories the renderer knows how to draw. Business identity
- *  ("Heatmap API", "GEX/VEX Analysis") lives in `label`, never in this union —
- *  that is what keeps business concepts out of the canvas renderer. */
+/**
+ * Node categories the renderer knows how to draw. Business identity
+ * ("Heatmap API", "GEX/VEX Analysis") lives in `label`, never in this union —
+ * that is what keeps business concepts out of the canvas renderer.
+ */
 export const FLOW_NODE_TYPES = [
   'agent',
   'task',
@@ -76,15 +67,7 @@ export const FLOW_EVENT_TYPES = [
 ] as const
 export type FlowEventType = (typeof FLOW_EVENT_TYPES)[number]
 
-// ─── Structured log ──────────────────────────────────────────────────────────
-
-/**
- * Explainable execution log.
- *
- * This is NOT model chain-of-thought and must never be populated from hidden
- * reasoning tokens. It is a deliberate, producer-authored account of what a
- * step did and why — safe to display, safe to persist, safe to share.
- */
+/** Producer-authored execution details only; never populate this with private model reasoning. */
 export interface StructuredLog {
   /** Coarse stage name, e.g. 'risk_analysis'. Groups entries in the Logs view. */
   phase: string
@@ -106,8 +89,6 @@ export interface StructuredLog {
   /** ISO 8601. Defaults to the carrying event's timestamp when absent. */
   timestamp?: string
 }
-
-// ─── Event payload ───────────────────────────────────────────────────────────
 
 export interface FlowNodeRef {
   id: string
@@ -175,8 +156,10 @@ export interface FlowEvent {
   /** ISO 8601 absolute time. The reducer converts to run-relative seconds. */
   timestamp: string
   eventType: FlowEventType
-  /** Monotonic per-run sequence number. When present, the SSE client uses it
-   *  to reorder events that arrive out of order after a reconnect. */
+  /**
+   * Monotonic per-run sequence number. When present, the SSE client uses it
+   * to reorder events that arrive out of order after a reconnect.
+   */
   seq?: number
   node?: FlowNodeRef
   /** Implies an edge parent → node when no explicit `edge` is given. */
@@ -185,11 +168,11 @@ export interface FlowEvent {
   metadata?: FlowEventMetadata
 }
 
-// ─── Event → status mapping ──────────────────────────────────────────────────
-
 /**
+ *
  * Status implied by an event type, when `metadata.status` is absent.
  * `null` means "this event does not change node status" (e.g. log.created).
+ *
  */
 const IMPLIED_STATUS: Partial<Record<FlowEventType, FlowNodeStatus | null>> = {
   'node.created': 'idle',
@@ -229,13 +212,13 @@ export function impliedEdgeKind(event: FlowEvent): FlowEdgeKind {
   return event.edge?.kind ?? IMPLIED_EDGE_KIND[event.eventType] ?? 'control'
 }
 
-/** Deterministic edge id so the same logical edge is never created twice,
- *  whether it came from an explicit `edge.created` or from `parentNodeId`. */
+/**
+ * Deterministic edge id so the same logical edge is never created twice,
+ * whether it came from an explicit `edge.created` or from `parentNodeId`.
+ */
 export function deriveEdgeId(source: string, target: string, kind: FlowEdgeKind): string {
   return `e:${source}->${target}:${kind}`
 }
-
-// ─── Validation ──────────────────────────────────────────────────────────────
 
 export type ValidationResult =
   | { ok: true; event: FlowEvent }
@@ -253,13 +236,7 @@ function oneOf<T extends string>(v: unknown, allowed: readonly T[]): v is T {
   return typeof v === 'string' && (allowed as readonly string[]).includes(v)
 }
 
-/**
- * Validate an untrusted object into a {@link FlowEvent}.
- *
- * Rejects rather than coerces on anything structural (ids, event type, node
- * type). Tolerates and drops anything cosmetic — a bad `progress` or an
- * unknown metadata key must never take down the visualizer mid-run.
- */
+/** Validate structural fields strictly; drop invalid cosmetic metadata. */
 export function validateFlowEvent(raw: unknown): ValidationResult {
   if (!isRecord(raw)) return { ok: false, reason: 'event is not an object' }
 
@@ -320,8 +297,10 @@ export function validateFlowEvent(raw: unknown): ValidationResult {
   return { ok: true, event }
 }
 
-/** Drop malformed known fields; pass unknown keys through untouched so
- *  producers can carry domain data we do not model yet. */
+/**
+ * Drop malformed known fields; pass unknown keys through untouched so
+ * producers can carry domain data we do not model yet.
+ */
 function sanitizeMetadata(raw: Record<string, unknown>): FlowEventMetadata {
   const md: FlowEventMetadata = { ...raw }
 
@@ -374,8 +353,6 @@ function sanitizeLog(raw: unknown): StructuredLog | null {
   return log
 }
 
-// ─── JSONL codec ─────────────────────────────────────────────────────────────
-
 /** Serialize one event to a single JSONL line (no trailing newline). */
 export function serializeFlowEvent(event: FlowEvent): string {
   return JSON.stringify(event)
@@ -387,8 +364,10 @@ export function serializeFlowJsonl(events: readonly FlowEvent[]): string {
 
 export interface JsonlParseResult {
   events: FlowEvent[]
-  /** 1-based line number + why it was rejected. Surfaced in the UI so a bad
-   *  producer is debuggable instead of silently dropping half a run. */
+  /**
+   * 1-based line number + why it was rejected. Surfaced in the UI so a bad
+   * producer is debuggable instead of silently dropping half a run.
+   */
   errors: Array<{ line: number; reason: string }>
 }
 
@@ -417,8 +396,10 @@ export function parseFlowJsonl(text: string): JsonlParseResult {
   return { events, errors }
 }
 
-/** Order events for replay: by `seq` when every event has one, else by
- *  timestamp. Ties keep their original relative order (stable sort). */
+/**
+ * Order events for replay: by `seq` when every event has one, else by
+ * timestamp. Ties keep their original relative order (stable sort).
+ */
 export function sortFlowEvents(events: readonly FlowEvent[]): FlowEvent[] {
   const allHaveSeq = events.every(e => typeof e.seq === 'number')
   const indexed = events.map((event, index) => ({ event, index }))

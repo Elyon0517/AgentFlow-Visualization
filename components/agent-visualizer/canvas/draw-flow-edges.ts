@@ -1,11 +1,4 @@
-/**
- * Directed edge and particle rendering.
- *
- * Edges are drawn source → target with an arrowhead, and particles travel the
- * curve in the direction the data actually moved. A response reuses its
- * request's edge with `reverse` set, so one channel shows traffic both ways
- * rather than the graph sprouting a second, backwards line.
- */
+/** Render directed edges; responses reuse request edges with reverse particles. */
 
 import type { FlowEdge, FlowNode, FlowParticle } from '@/lib/flow/graph'
 import type { LayoutNode } from '@/lib/flow/layout'
@@ -38,12 +31,7 @@ interface EdgeGeometry {
   cp2x: number; cp2y: number
 }
 
-/**
- * Curve for an edge, trimmed to each node's outline.
- *
- * Trimming matters for arrowheads: an arrow drawn at the node *centre* is
- * hidden underneath the node, so the direction of flow becomes invisible.
- */
+/** Trim edges to node outlines so arrowheads remain visible. */
 function edgeGeometry(
   edge: FlowEdge,
   nodes: ReadonlyMap<string, FlowNode>,
@@ -145,8 +133,6 @@ export function drawFlowEdges(ctx: CanvasRenderingContext2D, options: DrawEdgesO
     ctx.restore()
   }
 }
-
-// ─── Particles ───────────────────────────────────────────────────────────────
 
 export interface DrawParticlesOptions {
   particles: readonly FlowParticle[]
