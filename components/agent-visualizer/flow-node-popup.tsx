@@ -1,15 +1,6 @@
 'use client'
 
-/**
- * Node inspector.
- *
- * Everything the acceptance criteria ask to see on click: status, timing,
- * input/output summaries, request/response history, structured logs, and the
- * error with its retry count.
- *
- * Data comes from a snapshot taken at click time rather than from live state,
- * so the panel does not shift under the cursor while the run continues.
- */
+/** Inspect a click-time snapshot of node status, timing, transfers, logs and errors. */
 
 import { useMemo, useState } from 'react'
 import { COLORS } from '@/lib/colors'
@@ -182,15 +173,7 @@ export function FlowNodePopup({
   )
 }
 
-// ─── Structured log entry ────────────────────────────────────────────────────
-
-/**
- * Renders the explainable-log fields.
- *
- * Field order follows how the step actually unfolded — why, what it did, what
- * it saw, what came of it — so an entry reads as a narrative rather than a
- * bag of keys.
- */
+/** Render log fields in execution order: reason, action, observation, result. */
 export function LogEntry({ log, showPhase = true }: { log: StructuredLog; showPhase?: boolean }) {
   const levelColor =
     log.level === 'error' ? COLORS.error :
@@ -228,8 +211,6 @@ function LogField({ label, value, color }: { label: string; value: string; color
   )
 }
 
-// ─── Layout helpers ──────────────────────────────────────────────────────────
-
 function Section({ title, accent, children }: { title?: string; accent?: string; children: React.ReactNode }) {
   return (
     <div className="mb-3 pb-2" style={{ borderBottom: `1px solid ${COLORS.panelSeparator}` }}>
@@ -263,16 +244,7 @@ function Pill({ color, children }: { color: string; children: React.ReactNode })
   )
 }
 
-// ─── Timing ──────────────────────────────────────────────────────────────────
-
-/**
- * Wall-clock and elapsed timings.
- *
- * `elapsed` is always end-minus-start, so it agrees with the timestamps shown
- * beside it. A producer-reported `durationMs` is shown separately rather than
- * replacing it — on a retried node the two legitimately differ, because the
- * report covers the successful attempt while the span covers every attempt.
- */
+/** Elapsed time spans all attempts; producer-reported duration may cover only the successful attempt. */
 function describeTiming(
   node: FlowNode,
   runTime: number,

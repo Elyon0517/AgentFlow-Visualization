@@ -1,13 +1,4 @@
-/**
- * Per-frame animation advance.
- *
- * Every value here is driven by elapsed time and by state the reducer already
- * produced — there are no independent timers and no randomness, so what you
- * see during a replay is what happened during the live run.
- *
- * Everything mutates in place. `node.anim` is shared by reference across the
- * reducer's node copies precisely so this loop can run without allocating.
- */
+/** Deterministic, elapsed-time animation. Mutate shared node.anim objects in place to avoid allocations. */
 
 import type { FlowNode, FlowState } from './graph'
 
@@ -18,16 +9,22 @@ export const FLOW_ANIM = {
   scaleIn: 4,
   /** Edge opacity units per second. */
   edgeFadeIn: 2.5,
-  /** Fraction of an edge traversed per second. ~1.1s end to end reads clearly
-   *  without feeling sluggish when several fire at once. */
+  /**
+   * Fraction of an edge traversed per second. ~1.1s end to end reads clearly
+   * without feeling sluggish when several fire at once.
+   */
   particleSpeed: 0.9,
   /** Focus dim/undim lerp per second. Slow enough to read as a transition. */
   focusLerp: 6,
-  /** Opacity multiplier for nodes outside the focused path. Dimmed, never
-   *  hidden — the rest of the graph must stay legible. */
+  /**
+   * Opacity multiplier for nodes outside the focused path. Dimmed, never
+   * hidden — the rest of the graph must stay legible.
+   */
   focusDim: 0.28,
-  /** Seconds of frame time to process at most, so a backgrounded tab does not
-   *  fast-forward the whole animation on return. */
+  /**
+   * Seconds of frame time to process at most, so a backgrounded tab does not
+   * fast-forward the whole animation on return.
+   */
   maxDelta: 0.1,
 } as const
 
@@ -56,19 +53,16 @@ export function advanceNodeAnim(node: FlowNode, deltaTime: number, focusTarget: 
 }
 
 export interface AdvanceOptions {
-  /** Nodes on the focused path. `null` means no focus is active and every
-   *  node renders at full brightness. */
+  /**
+   * Nodes on the focused path. `null` means no focus is active and every
+   * node renders at full brightness.
+   */
   focusSet: Set<string> | null
   /** Playback rate. Scales particle travel so a sped-up replay stays coherent. */
   speed: number
 }
 
-/**
- * Advance every animated value by one frame.
- *
- * Returns true when a particle finished this frame, which is the only change
- * the caller may need to react to (edges lose their "active" glow).
- */
+/** Advance one frame; return true when a particle finishes. */
 export function advanceFlowAnimations(state: FlowState, rawDelta: number, options: AdvanceOptions): boolean {
   const deltaTime = Math.min(rawDelta, FLOW_ANIM.maxDelta)
   const { focusSet, speed } = options
@@ -99,16 +93,10 @@ export function advanceFlowAnimations(state: FlowState, rawDelta: number, option
 
   return completed
 }
-
-// ─── Derived animation values ────────────────────────────────────────────────
 // Pure functions of (state, time). The renderer calls these; keeping them here
 // means the same numbers can be asserted in tests without a canvas.
 
-/** Gentle size oscillation for a node, by status.
- *
- * Running breathes slightly; waiting breathes less. Everything else is still —
- * motion is what distinguishes an executing node from a finished one, so idle
- * states must not move at all. */
+/** Running and waiting nodes pulse; completed and idle nodes remain still. */
 export function breatheScale(node: FlowNode, time: number): number {
   switch (node.status) {
     case 'running':
@@ -120,8 +108,10 @@ export function breatheScale(node: FlowNode, time: number): number {
   }
 }
 
-/** Border alpha by status. Success is deliberately dimmer than running, and
- *  is further distinguished by having no motion at all. */
+/**
+ * Border alpha by status. Success is deliberately dimmer than running, and
+ * is further distinguished by having no motion at all.
+ */
 export function borderAlpha(node: FlowNode, time: number): number {
   switch (node.status) {
     case 'running': return 0.9
@@ -148,8 +138,10 @@ export function glowAlpha(node: FlowNode, isSelected: boolean, isHovered: boolea
   }
 }
 
-/** Horizontal offset for the failure shake. A damped oscillation played once,
- *  never looped — an error should register, not nag. */
+/**
+ * Horizontal offset for the failure shake. A damped oscillation played once,
+ * never looped — an error should register, not nag.
+ */
 export function failureShakeOffset(node: FlowNode): number {
   const shot = node.anim.oneShot
   if (!shot || shot.kind !== 'failed') return 0

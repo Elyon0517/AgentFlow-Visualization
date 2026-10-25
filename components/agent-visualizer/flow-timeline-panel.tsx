@@ -1,15 +1,6 @@
 'use client'
 
-/**
- * Timeline view.
- *
- * A Gantt of every node's lifetime, ordered by when it started. Reads the
- * concurrency of a run at a glance — overlapping bars are the parallel work,
- * and gaps are where the pipeline was blocked.
- *
- * Canvas rather than DOM, matching the existing timeline panel: a long run has
- * hundreds of bars, and a canvas redraw beats reconciling hundreds of nodes.
- */
+/** Canvas Gantt view of node lifetimes, ordered by start time. */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { COLORS } from '@/lib/colors'
@@ -129,8 +120,6 @@ export function FlowTimelinePanel({
     </div>
   )
 }
-
-// ─── Drawing ─────────────────────────────────────────────────────────────────
 
 function drawGantt(
   ctx: CanvasRenderingContext2D,

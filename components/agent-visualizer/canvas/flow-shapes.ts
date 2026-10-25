@@ -1,10 +1,4 @@
-/**
- * Node outline primitives.
- *
- * Each function traces a path centred on (x, y) and leaves it open for the
- * caller to fill or stroke, matching the convention `drawHexagon` in
- * draw-misc.ts already uses.
- */
+/** Trace node outlines around (x, y); callers apply fill and stroke. */
 
 import type { NodeShape } from '@/lib/flow/node-registry'
 import { drawHexagon } from './draw-misc'
@@ -45,13 +39,7 @@ function traceDiamond(ctx: CanvasRenderingContext2D, x: number, y: number, r: nu
   ctx.closePath()
 }
 
-/**
- * Database cylinder.
- *
- * Traced as a single closed path (body plus the front curve of the top
- * ellipse) so one fill and one stroke render the whole silhouette; the top
- * ellipse's back edge is drawn separately by {@link drawCylinderLid}.
- */
+/** Trace a closed cylinder silhouette; drawCylinderLid adds the rear top edge. */
 function traceCylinder(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
   const w = r * 1.7
   const h = r * 1.9
@@ -90,13 +78,7 @@ export function traceNodeShape(
   }
 }
 
-/**
- * Half-extents of a shape's bounding box.
- *
- * Hit detection and the label layout both need this, and they must agree with
- * what was drawn — so the numbers live next to the tracing code rather than
- * being re-derived at each call site.
- */
+/** Shared shape bounds for hit testing and label placement. */
 export function nodeShapeExtents(shape: NodeShape, r: number): { halfW: number; halfH: number } {
   switch (shape) {
     case 'hexagon': return { halfW: r, halfH: r }
@@ -107,13 +89,7 @@ export function nodeShapeExtents(shape: NodeShape, r: number): { halfW: number; 
   }
 }
 
-/**
- * Where an edge should meet a node's outline.
- *
- * Approximated on the bounding box rather than the true outline: exact
- * ray/shape intersection costs more than it is worth at these sizes, and the
- * difference is under a pixel for every shape here.
- */
+/** Intersect the bounding box to approximate where an edge meets a node. */
 export function shapeBoundaryPoint(
   shape: NodeShape, cx: number, cy: number, r: number, towardX: number, towardY: number,
 ): { x: number; y: number } {

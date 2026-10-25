@@ -1,8 +1,4 @@
-/**
- * Bloom post-processing for holographic glow effect.
- * Takes the main canvas, extracts bright areas, blurs them,
- * and composites back with additive blending.
- */
+/** Extract bright canvas regions, blur, and composite with additive blending. */
 
 export class BloomRenderer {
   private bloomCanvas: HTMLCanvasElement
@@ -34,13 +30,9 @@ export class BloomRenderer {
   }
 
   /**
-   * @param destWidth  Destination width in CSS pixels.
+   * @param destWidth Destination width in CSS pixels.
    * @param destHeight Destination height in CSS pixels.
-   *
-   * The size must be given in CSS pixels, not backing-store pixels: the target
-   * context is already scaled by devicePixelRatio, so compositing at
-   * `sourceCanvas.width` drew the glow at dpr× its correct size — a visible
-   * ghost of the scene on any display where dpr !== 1.
+   * The target context is already scaled by devicePixelRatio.
    */
   apply(
     sourceCanvas: HTMLCanvasElement,

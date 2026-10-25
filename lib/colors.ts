@@ -1,10 +1,4 @@
-/**
- * Instrument-panel palette.
- *
- * Canvas and React chrome share the same phosphor / graphite vocabulary so
- * the interface reads as one engineered system instead of a collection of
- * floating cards.
- */
+/** Shared canvas and UI palette. */
 
 export const COLORS = {
   // Background

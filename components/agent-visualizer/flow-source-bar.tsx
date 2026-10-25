@@ -1,12 +1,6 @@
 'use client'
 
-/**
- * Event source control.
- *
- * The visualizer accepts events from three places and this is where you pick:
- * the bundled demo, a live stream, or a saved `.jsonl` run. Switching source
- * is the only thing that resets the graph.
- */
+/** Select demo, live SSE or saved JSONL input; changing the source resets the graph. */
 
 import { useRef, useState } from 'react'
 import { COLORS } from '@/lib/colors'

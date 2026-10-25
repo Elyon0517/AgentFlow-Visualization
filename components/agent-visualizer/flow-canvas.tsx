@@ -1,12 +1,6 @@
 'use client'
 
-/**
- * Canvas host for the generic workflow view.
- *
- * Reuses the shared background layer, bloom post-processing, and bezier
- * primitives. Reads simulation state from a ref every frame so panning,
- * animating, and 60fps rendering never trigger a React render.
- */
+/** Read frame state from refs so animation and camera movement do not rerender React. */
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react'
 import { PERF_OVERLAY, PERF_OVERLAY_ENABLED, type DepthParticle } from '@/lib/canvas-config'
@@ -61,8 +55,6 @@ export function FlowCanvas({
 
   const perfRef = useRef({ frames: 0, lastUpdateMs: 0, fps: 0, frameTimes: [] as number[], p95: 0 })
 
-  // ─── Viewport ──────────────────────────────────────────────────────────────
-
   const hitTest = useCallback((worldX: number, worldY: number) => {
     const layout = layoutRef.current
     if (!layout) return null
@@ -78,8 +70,6 @@ export function FlowCanvas({
     zoomToFitTrigger,
     pauseAutoFit,
   })
-
-  // ─── Setup ─────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     // Bloom is reserved for active/selected state; a lower global strength
@@ -107,8 +97,6 @@ export function FlowCanvas({
     observer.observe(container)
     return () => observer.disconnect()
   }, [])
-
-  // ─── Draw loop ─────────────────────────────────────────────────────────────
 
   const drawRef = useRef<(ts: number) => void>(() => {})
 
@@ -236,8 +224,6 @@ export function FlowCanvas({
     </div>
   )
 }
-
-// ─── Perf overlay (?perf or ?stress) ─────────────────────────────────────────
 
 function drawPerfOverlay(
   ctx: CanvasRenderingContext2D,

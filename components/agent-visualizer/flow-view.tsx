@@ -1,12 +1,6 @@
 'use client'
 
-/**
- * Workflow visualizer shell.
- *
- * Three views over one run — the graph (Current Run), a Gantt (Timeline), and
- * the structured log stream (Logs). All three read the same state, so a node
- * selected in one is selected in all of them.
- */
+/** Graph, timeline and logs share run state and node selection. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { COLORS } from '@/lib/colors'
@@ -49,8 +43,6 @@ export function FlowView() {
   const [filtersOpen, setFiltersOpen] = useState(true)
   const [zoomTrigger, setZoomTrigger] = useState(0)
 
-  // ─── Event source ──────────────────────────────────────────────────────────
-
   const urlParams = useMemo(readUrlParams, [])
   const [source, setSource] = useState<SourceKind>(
     urlParams.stream ? 'live' : urlParams.replay ? 'file' : 'mock',
@@ -82,8 +74,6 @@ export function FlowView() {
     // read its details should not grey out everything else.
     focusNodeId: focusPath ? selectedNodeId : null,
   })
-
-  // ─── Source actions ────────────────────────────────────────────────────────
 
   const openFile = useCallback(async (file: File) => {
     setFileError(undefined)

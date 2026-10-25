@@ -1,12 +1,6 @@
 'use client'
 
-/**
- * React binding for the live event stream.
- *
- * Incoming events are queued in a ref and drained by the frame loop, matching
- * how `useFlowRun` already consumes `liveEvents` — a burst of a hundred events
- * costs one render, not a hundred.
- */
+/** Queue live events in a ref and drain them as a batch in the frame loop. */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FlowEvent } from '@/lib/flow/events'

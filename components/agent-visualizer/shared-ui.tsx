@@ -2,8 +2,6 @@
 
 import type { ReactNode } from 'react'
 import { COLORS } from '@/lib/colors'
-
-// ─── Stop Propagation Handlers ──────────────────────────────────────────────
 // Prevents canvas drag/click events from firing when interacting with panels
 
 export const stopPropagationHandlers = {
@@ -11,8 +9,6 @@ export const stopPropagationHandlers = {
   onMouseUp: (e: React.MouseEvent) => e.stopPropagation(),
   onClick: (e: React.MouseEvent) => e.stopPropagation(),
 } as const
-
-// ─── Close Button ───────────────────────────────────────────────────────────
 
 export function CloseButton({ onClick, className = '' }: { onClick: () => void; className?: string }) {
   return (
@@ -25,8 +21,6 @@ export function CloseButton({ onClick, className = '' }: { onClick: () => void; 
     </button>
   )
 }
-
-// ─── Panel Header ───────────────────────────────────────────────────────────
 
 interface PanelHeaderProps {
   children: ReactNode

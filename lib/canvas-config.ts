@@ -1,10 +1,4 @@
-/**
- * Small, generic canvas/UI constants shared by the flow renderer.
- *
- * Trimmed out of the original app-wide `agent-types.ts` / `canvas-constants.ts`,
- * which mixed these in with a lot of Agent-specific config. Nothing here
- * depends on any business concept.
- */
+/** Canvas and UI constants shared by the workflow renderer. */
 
 /** A single background parallax star, drawn by `background-layer.ts`. */
 export interface DepthParticle {
@@ -56,6 +50,8 @@ export const PERF_OVERLAY = {
   textColor: '#cccccc',
 } as const
 
-/** Combined height of the view bar and the source bar. Full-screen panels
- *  start below it so they never sit underneath the chrome. */
+/**
+ * Combined height of the view bar and the source bar. Full-screen panels
+ * start below it so they never sit underneath the chrome.
+ */
 export const CHROME_HEIGHT = 96

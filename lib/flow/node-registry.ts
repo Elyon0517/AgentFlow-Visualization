@@ -1,13 +1,6 @@
 /**
- * Node type registry.
- *
- * The canvas renderer resolves everything it needs to draw a node from this
- * table, keyed only by `FlowNodeType`. Business identity ("Heatmap API",
- * "GEX/VEX Analysis", "Trade Decision") never appears here or in any drawing
- * code — it arrives as `FlowNode.label` and is rendered as text.
- *
- * Adding a node category means adding one entry here plus a glyph. It must
- * never mean touching the draw loop.
+ * Resolve rendering from FlowNodeType; business identity stays in labels.
+ * Add node categories here and in glyphs rather than branching in the draw loop.
  */
 
 import { COLORS } from '@/lib/colors'
@@ -17,11 +10,7 @@ import { PARTICLE_BASE_SIZE } from './graph'
 /** Outline drawn for a node. Implemented by the shape renderers. */
 export type NodeShape = 'hexagon' | 'rounded' | 'diamond' | 'cylinder' | 'capsule'
 
-/**
- * Idle-safe motion played inside a node while it is `running`.
- * Driven entirely by the shared frame clock — no per-node timers, so the
- * animation is a pure function of (state, time) and stays replay-accurate.
- */
+/** Drive running-node motion from the shared frame clock for replay consistency. */
 export type RunningMotion = 'orbit' | 'arc-sweep' | 'pulse-bar' | 'scan' | 'none'
 
 export interface NodeTypeSpec {
@@ -31,15 +20,21 @@ export interface NodeTypeSpec {
   shape: NodeShape
   /** Base radius in world units, before breathing and spawn scaling. */
   radius: number
-  /** Type accent color. Status color wins for the border; this tints the
-   *  interior glyph so types stay distinguishable at a glance. */
+  /**
+   * Type accent color. Status color wins for the border; this tints the
+   * interior glyph so types stay distinguishable at a glance.
+   */
   accent: string
   runningMotion: RunningMotion
-  /** False pins the node outside the force layout (memory sits to the side
-   *  rather than being flung around by charge forces). */
+  /**
+   * False pins the node outside the force layout (memory sits to the side
+   * rather than being flung around by charge forces).
+   */
   forceParticipant: boolean
-  /** Monospace glyph drawn at the node center. Kept to single characters so
-   *  it renders identically across platforms without a font dependency. */
+  /**
+   * Monospace glyph drawn at the node center. Kept to single characters so
+   * it renders identically across platforms without a font dependency.
+   */
   glyph: string
 }
 
@@ -156,8 +151,10 @@ const SPECS: NodeTypeSpec[] = [
 
 const REGISTRY = new Map<FlowNodeType, NodeTypeSpec>(SPECS.map(spec => [spec.type, spec]))
 
-/** Fallback for a type that somehow slipped past validation — draw something
- *  neutral rather than throwing inside the draw loop. */
+/**
+ * Fallback for a type that somehow slipped past validation — draw something
+ * neutral rather than throwing inside the draw loop.
+ */
 const FALLBACK: NodeTypeSpec = {
   type: 'task',
   displayName: 'Node',
@@ -173,8 +170,10 @@ export function getNodeSpec(type: FlowNodeType): NodeTypeSpec {
   return REGISTRY.get(type) ?? FALLBACK
 }
 
-/** Override or add a node type at runtime. Lets a host app extend the
- *  visualizer without forking the registry. */
+/**
+ * Override or add a node type at runtime. Lets a host app extend the
+ * visualizer without forking the registry.
+ */
 export function registerNodeType(spec: NodeTypeSpec): void {
   REGISTRY.set(spec.type, spec)
 }
@@ -183,11 +182,11 @@ export function allNodeSpecs(): NodeTypeSpec[] {
   return SPECS.slice()
 }
 
-// ─── Status colors ───────────────────────────────────────────────────────────
-
-/** Border/glow color per status. Success and running are deliberately
- *  different hues — the two are also distinguished by motion, never by
- *  brightness alone. */
+/**
+ * Border/glow color per status. Success and running are deliberately
+ * different hues — the two are also distinguished by motion, never by
+ * brightness alone.
+ */
 const STATUS_COLORS: Record<FlowNodeStatus, string> = {
   idle: '#5a6b8c',
   queued: '#7d8aa8',
@@ -207,12 +206,12 @@ export function getStatusLabel(status: FlowNodeStatus): string {
   return status.charAt(0).toUpperCase() + status.slice(1)
 }
 
-// ─── Edge kind styling ───────────────────────────────────────────────────────
-
 export interface EdgeKindSpec {
   color: string
-  /** Particle radius in world units. Sourced from the state layer so the
-   *  reducer and the renderer cannot drift apart. */
+  /**
+   * Particle radius in world units. Sourced from the state layer so the
+   * reducer and the renderer cannot drift apart.
+   */
   particleSize: number
   /** Trail length as a fraction of the curve. */
   trail: number

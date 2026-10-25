@@ -1,4 +1,3 @@
-// ─── Glow sprite cache ─────────────────────────────────────────────────────
 // Pre-renders radial gradient glows to off-screen canvases.
 // Avoids creating CanvasGradient objects every frame.
 
@@ -27,9 +26,6 @@ export function getGlowSprite(
   glowSpriteCache.set(key, sprite)
   return sprite
 }
-
-
-// ─── Text measurement cache ────────────────────────────────────────────────
 // Caches ctx.measureText().width to avoid redundant browser layout per frame.
 
 const textWidthCache = new Map<string, number>()
